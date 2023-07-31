@@ -28,7 +28,7 @@ while True:
         case "arquivo" | "arq":
             filename = input("> Digite o nome do arquivo:\n> ")
             try:
-                with open(filename, "r") as f:
+                with open(filename, "rb") as f:
                     data = f.read()
                     # enviar mensagem com o header file, e o nome do arquivo
                     client.sendUDP((client.header("file", basename(filename)) + str(data)).encode())
