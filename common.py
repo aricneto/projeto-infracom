@@ -7,6 +7,11 @@ Equipe: acn2
 '''
 
 class Socket: 
+    HEADER_START = "HELLO "
+    HEADER_END = " END\n\n"
+    HEADER_FILE = HEADER_START + "[FILE] filename="
+    HEADER_MSG = HEADER_START + "[MESSAGE]" + HEADER_END
+
     def __init__(self, sock=None, host="localhost", port=5000, buffer_size=1024, server=False):
         if sock is None:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -17,6 +22,13 @@ class Socket:
         
         if server: # se for um servidor, devemos chamar bind no endereço 
             self.sock.bind(self.ip)
+
+    def header(self, type, filename=""):
+        match type:
+            case "file":
+                return self.HEADER_FILE + filename + self.HEADER_END
+            case "msg" | _:
+                return self.HEADER_MSG
 
     def sendUDP(self, msg):
         total_sent = 0
