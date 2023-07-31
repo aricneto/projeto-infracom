@@ -4,22 +4,11 @@ Cliente UDP
 Equipe: acn2
 '''
 
-import socket
+from common import Socket
 
-class MySocket: 
-    def __init__(self, sock=None, host="localhost", port=5000):
-        if sock is None:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        else:
-            self.sock = sock
-        self.dest = (host, port)
-    
-    
 
-client = MySocket()
-
+client = Socket()
 print("Bem vindo ao transmissor de mensagens 3000\nDigite CTRL+X para sair")
-
 
 while True:
     msg = input()
@@ -28,7 +17,7 @@ while True:
     if msg == "\x18": 
         break
 
-    client.sock.sendto(msg.encode(), client.dest)
+    client.sendUDP(msg.encode())
 
 client.sock.close()
 
