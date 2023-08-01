@@ -24,16 +24,22 @@ while True:
         case "mensagem" | "msg":
             mensagem = input("> Digite sua mensagem:\n> ")
             # enviar mensagem com o header mensagem
-            client.sendUDP((client.header("msg") + mensagem).encode())
+            client.sendUDP((client.header("msg") + mensagem + Socket.FOOTER_END).encode())
         case "arquivo" | "arq":
             filename = input("> Digite o nome do arquivo:\n> ")
             try:
                 with open(filename, "rb") as f:
                     data = f.read()
                     # enviar mensagem com o header file, e o nome do arquivo
-                    client.sendUDP((client.header("file", basename(filename)) + str(data)).encode())
+                    client.sendUDP((client.header("file", basename(filename)) + str(data) + Socket.FOOTER_END).encode())
                     f.close()
             except IOError:
                 print("Nome de arquivo inválido!")
+    #assim vai nao?
+    #msg, adr = client.receiveUDP()
+    #print(msg.decode())
+    
+    #msg, addr = client.sock.recvfrom(1024)
+    #print(msg.decode())
 
 client.sock.close()

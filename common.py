@@ -8,9 +8,10 @@ Equipe: acn2
 
 class Socket: 
     HEADER_START = "HELLO "
-    HEADER_END = " END\n\n"
+    HEADER_END = " END\n"
     HEADER_FILE = HEADER_START + "[FILE] filename="
     HEADER_MSG = HEADER_START + "[MESSAGE]" + HEADER_END
+    FOOTER_END = "###### END OF FILE TRANSFER ######"
 
     def __init__(self, sock=None, host="localhost", port=5000, buffer_size=1024, server=False):
         if sock is None:
