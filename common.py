@@ -9,8 +9,8 @@ Equipe: acn2
 class Socket: 
     HEADER_START = "HELLO "
     HEADER_END = " END\n"
-    HEADER_FILE = HEADER_START + "[FILE] filename="
-    HEADER_MSG = HEADER_START + "[MESSAGE]" + HEADER_END
+    HEADER_FILE = HEADER_START + "type=file filename="
+    HEADER_MSG = HEADER_START + "type=message"
     FOOTER_END = "###### END OF FILE TRANSFER ######"
 
     def __init__(self, sock=None, host="localhost", port=5000, buffer_size=1024, server=False):
@@ -27,7 +27,7 @@ class Socket:
     def header(self, type, filename=""):
         match type:
             case "file":
-                return self.HEADER_FILE + filename + self.HEADER_END
+                return self.HEADER_FILE + filename
             case "msg" | _:
                 return self.HEADER_MSG
 

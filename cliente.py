@@ -31,15 +31,11 @@ while True:
                 with open(filename, "rb") as f:
                     data = f.read()
                     # enviar mensagem com o header file, e o nome do arquivo
-                    client.sendUDP((client.header("file", basename(filename)) + str(data) + Socket.FOOTER_END).encode())
+                    client.sendUDP(client.header("file", basename(filename)).encode())
+                    client.sendUDP(data)
+                    client.sendUDP(Socket.FOOTER_END.encode())
                     f.close()
             except IOError:
                 print("Nome de arquivo inválido!")
-    #assim vai nao?
-    #msg, adr = client.receiveUDP()
-    #print(msg.decode())
     
-    #msg, addr = client.sock.recvfrom(1024)
-    #print(msg.decode())
-
 client.sock.close()
