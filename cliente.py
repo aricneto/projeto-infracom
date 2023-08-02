@@ -4,7 +4,6 @@ from ntpath import basename
 """
 Cliente UDP
 
-Equipe: acn2
 """
 
 client = Socket()
@@ -24,18 +23,25 @@ while True:
         case "mensagem" | "msg":
             mensagem = input("> Digite sua mensagem:\n> ")
             # enviar mensagem com o header mensagem
-            client.sendUDP((client.header("msg") + mensagem + Socket.FOOTER_END).encode())
+            client.sendUDP(client.header("msg").encode())
+            client.sendUDP(mensagem.encode())
         case "arquivo" | "arq":
-            filename = input("> Digite o nome do arquivo:\n> ")
+            filename = "test_files/empty.txt"#input("> Digite o nome do arquivo:\n> ")
             try:
                 with open(filename, "rb") as f:
                     data = f.read()
-                    # enviar mensagem com o header file, e o nome do arquivo
-                    client.sendUDP(client.header("file", basename(filename)).encode())
+                    # enviar mensagem com o header file, nome do arquivo, e filesize
+                    client.sendUDP(client.header("file", basename(filename), len(data)).encode())
                     client.sendUDP(data)
-                    client.sendUDP(Socket.FOOTER_END.encode())
                     f.close()
             except IOError:
                 print("Nome de arquivo inválido!")
+        case "filesize" | "fsz":
+            filename = "test_files/declaration.txt"
+            with open(filename, "rb") as f:
+                filesize = len(f.read())
+                print(f"Bytes do arquivo: {filesize}")
+        case "sdw":
+            client.sendUDP("sdw".encode())
     
 client.sock.close()

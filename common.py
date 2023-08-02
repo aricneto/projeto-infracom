@@ -3,13 +3,12 @@ import socket
 '''
 Funções comuns a serem usadas pelos sockets
 
-Equipe: acn2
 '''
 
 class Socket: 
-    HEADER_START = "HELLO "
-    HEADER_END = " END\n"
-    HEADER_FILE = HEADER_START + "type=file filename="
+    HEADER_START = "HELLO"
+    HEADER_END = "END"
+    HEADER_FILE = HEADER_START
     HEADER_MSG = HEADER_START + "type=message"
     FOOTER_END = "###### END OF FILE TRANSFER ######"
 
@@ -24,10 +23,10 @@ class Socket:
         if server: # se for um servidor, devemos chamar bind no endereço 
             self.sock.bind(self.ip)
 
-    def header(self, type, filename=""):
+    def header(self, type, file_name="", file_size=0):
         match type:
             case "file":
-                return self.HEADER_FILE + filename
+                return ",".join([self.HEADER_START, file_name, str(file_size)])
             case "msg" | _:
                 return self.HEADER_MSG
 
