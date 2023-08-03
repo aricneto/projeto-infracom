@@ -14,9 +14,9 @@ recebendo = False
 header = ""
 
 while True:
-    if recebendo:
+    if recebendo and header:
         server.sock.settimeout(5)
-        filename = pathjoin("output", header[1])
+        filename = pathjoin("output", header[Socket.Header.FILENAME])
         try:
             with open(filename, "wb") as new_file:
                 msg_size = 0
@@ -26,23 +26,21 @@ while True:
                     new_file.write(msg)
                     
                     # parar quando tiver recebido todos os bytes especificados no header
-                    if msg_size == int(header[2]):
+                    if msg_size == int(header[Socket.Header.DATA_LENGTH]):
                         break
                 print(f"Arquivo salvo: {filename}")
         except TimeoutError:
-            print ("Erro na transmissão de arquivos.")
+            print ("Erro no recebimento do arquivo")
         server.sock.settimeout(None)
         recebendo = False
 
     if not recebendo:
-        msg, _ = server.receiveUDP()
+        header = server.receiveHeaderUDP()
 
-        if msg.decode()[:len(Socket.HEADER_START)] == Socket.HEADER_START:
+        if header:
             recebendo = True
-            header = msg.decode().split(",")
-            print(header)
 
-        if msg.decode() == "sdw":
+        if header and header[Socket.Header.EXTRA] == "sdw":
             break
 
 server.sock.close()

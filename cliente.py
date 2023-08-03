@@ -34,6 +34,6 @@ while True:
             except IOError:
                 print("Nome de arquivo inválido!")
         case "sdw":
-            client.sendUDP("sdw".encode())
+            client.sendUDP(extra="sdw")
     
 client.sock.close()
