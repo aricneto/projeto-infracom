@@ -1,12 +1,22 @@
 from common import Socket
 from os.path import basename
+import os.path
 
 """
 Cliente UDP
 
 """
 
-client = Socket()
+# inicializar cliente
+client = Socket(port=1337, server=True)
+
+CLIENT_DIR = "files_client"
+
+# inicializar pasta cliente
+if not os.path.exists(CLIENT_DIR):
+    os.makedirs(CLIENT_DIR)
+
+
 print("Bem vindo ao transmissor de mensagens 3000\nDigite CTRL+X para sair")
 print("Comandos disponiveis:")
 print("- arquivo  | arq     : enviar arquivo")
@@ -27,11 +37,20 @@ while True:
         case "arquivo" | "arq":
             filename = input("> Digite o nome do arquivo:\n> ")
             try:
+                # enviar o arquivo
                 with open(filename, "rb") as f:
-                    client.sendUDP(f.read(), basename(filename))
+                    client.sendUDP(
+                        port=5000,
+                        msg=f.read(),
+                        filename=basename(filename),
+                    )
+
+                # receber de volta
+                header, _ = client.receiveHeaderUDP()
+                client.receiveFileUDP(header, path=CLIENT_DIR)
             except IOError:
                 print("Nome de arquivo inválido!")
         case "sdw":
-            client.sendUDP(extra="sdw")
-    
+            client.sendUDP(port=5000, extra="sdw")
+
 client.sock.close()

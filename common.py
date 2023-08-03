@@ -24,14 +24,16 @@ class Socket:
             self.sock = sock
         self.ip = (host, port)
         self.buffer_size = buffer_size
-        
-        if server: # se for um servidor, devemos chamar bind no endereço 
-            self.sock.bind(self.ip)
 
-    def sendUDP(self, msg=[], filename="", extra=""):
+        if server:
+            self.sock.bind(self.ip)
+            
+
+    def sendUDP(self, port, ip="localhost", msg=[], filename="", extra=""):
         # 1) calcular tamanho da mensagem em bytes
         MSGLEN = len(msg)
         total_sent = 0
+        destination = (ip, port)
 
         # 2) definir header da mensagem
         #                            ↱ nome do arquivo
@@ -41,13 +43,13 @@ class Socket:
 
         # 3) enviar header da mensagem
         print(f"Enviando um header de {len(header)} bytes")
-        self.sock.sendto(",".join(header).encode(), self.ip)
+        self.sock.sendto(",".join(header).encode(), destination)
         
 
         # 4) enviar mensagem parcelada em pacotes tamanho buffer_size
         print(f"Enviando um arquivo de {MSGLEN} bytes")
         while total_sent < MSGLEN: # enquanto a mensagem ainda não foi completamente enviada
-            total_sent += self.sock.sendto(msg[total_sent:total_sent + self.buffer_size], self.ip)
+            total_sent += self.sock.sendto(msg[total_sent:total_sent + self.buffer_size], destination)
             #print(f"> Bytes enviados: {total_sent}")
 
         if total_sent > 0 and total_sent == MSGLEN: 
@@ -58,19 +60,19 @@ class Socket:
     
     # Espera o recebimento de um header
     def receiveHeaderUDP(self):
-        msg, _ = self.receiveUDP()
+        msg, address = self.receiveUDP()
 
         if msg.decode()[:len(self.HEADER_START)] == self.HEADER_START:
             header = msg.decode().split(",")
             print(f"Reader recebido: {header}")
-            return header
+            return (header, address)
         
-        return None
+        return (None, address)
         
     # Recebe e salva um arquivo segundo as especificações de um header
-    def receiveFileUDP(self, header):
+    def receiveFileUDP(self, header, path="output"):
         self.sock.settimeout(5)
-        filename = pathjoin("output", header[Socket.Header.FILENAME])
+        filename = pathjoin(path, header[Socket.Header.FILENAME])
         try:
             with open(filename, "wb") as new_file:
                 msg_size = 0
