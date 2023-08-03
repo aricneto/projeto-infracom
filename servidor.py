@@ -1,4 +1,5 @@
 from common import Socket
+from os.path import join as pathjoin
 import re
 
 """
@@ -15,7 +16,7 @@ header = ""
 while True:
     if recebendo:
         server.sock.settimeout(5)
-        filename = "output/output.txt"
+        filename = pathjoin("output", header[1])
         try:
             with open(filename, "wb") as new_file:
                 msg_size = 0
@@ -24,6 +25,7 @@ while True:
                     msg_size += len(msg)
                     new_file.write(msg)
                     
+                    # parar quando tiver recebido todos os bytes especificados no header
                     if msg_size == int(header[2]):
                         break
                 print(f"Arquivo salvo: {filename}")

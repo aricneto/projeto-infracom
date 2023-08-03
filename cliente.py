@@ -1,5 +1,5 @@
 from common import Socket
-from ntpath import basename
+from os.path import basename
 
 """
 Cliente UDP
@@ -23,16 +23,13 @@ while True:
         case "mensagem" | "msg":
             mensagem = input("> Digite sua mensagem:\n> ")
             # enviar mensagem com o header mensagem
-            client.sendUDP(client.header("msg").encode())
             client.sendUDP(mensagem.encode())
         case "arquivo" | "arq":
-            filename = "test_files/declaration.txt"#input("> Digite o nome do arquivo:\n> ")
+            filename = input("> Digite o nome do arquivo:\n> ")
             try:
                 with open(filename, "rb") as f:
                     data = f.read()
-                    # enviar mensagem com o header file, nome do arquivo, e filesize
-                    client.sendUDP(client.header("file", basename(filename), len(data)).encode())
-                    client.sendUDP(data)
+                    client.sendUDP(data, basename(filename))
                     f.close()
             except IOError:
                 print("Nome de arquivo inválido!")

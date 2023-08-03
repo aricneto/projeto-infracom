@@ -1,3 +1,4 @@
+from os.path import splitext
 import socket
 
 '''
@@ -23,18 +24,19 @@ class Socket:
         if server: # se for um servidor, devemos chamar bind no endereço 
             self.sock.bind(self.ip)
 
-    def header(self, type, file_name="", file_size=0):
-        match type:
-            case "file":
-                return ",".join([self.HEADER_START, file_name, str(file_size)])
-            case "msg" | _:
-                return self.HEADER_MSG
-
-    def sendUDP(self, msg):
-        total_sent = 0
+    def sendUDP(self, msg, filename=""):
+        # 1) calcular tamanho da mensagem em bytes
         MSGLEN = len(msg)
+        total_sent = 0
+
+        # 2) enviar header da mensagem
+        self.sock.sendto(",".join([self.HEADER_START, filename, str(MSGLEN)]).encode(), self.ip)
+        #                          ↳ identificador do header
+        #                                             ↳ nome do arquivo
+        #                                                       ↳ tamanho da mensagem
+
+        # 3) enviar mensagem parcelada em pacotes tamanho buffer_size
         while total_sent < MSGLEN: # enquanto a mensagem ainda não foi completamente enviada
-            # parcelar a mensagem em pacotes tamanho buffer_size
             total_sent += self.sock.sendto(msg[total_sent:total_sent + self.buffer_size], self.ip)
             print(f"> Bytes enviados: {total_sent}")
 
