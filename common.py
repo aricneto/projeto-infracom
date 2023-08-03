@@ -1,6 +1,6 @@
 import socket
 from enum import IntEnum
-
+from os.path import join as pathjoin
 
 '''
 Funções comuns a serem usadas pelos sockets
@@ -9,6 +9,8 @@ Funções comuns a serem usadas pelos sockets
 
 class Socket: 
     HEADER_START = "HELLO"
+
+    # define as posições de cada um dos elementos do header de uma transferência
     class Header(IntEnum):
         START = 0
         FILENAME = 1
@@ -54,15 +56,33 @@ class Socket:
     def receiveUDP(self):
         return self.sock.recvfrom(self.buffer_size)
     
-    # uma função de utilidade usada para esperar o recebimento de um header
+    # Espera o recebimento de um header
     def receiveHeaderUDP(self):
         msg, _ = self.receiveUDP()
 
         if msg.decode()[:len(self.HEADER_START)] == self.HEADER_START:
             header = msg.decode().split(",")
-            print(header)
+            print(f"Reader recebido: {header}")
             return header
         
         return None
         
-    
+    # Recebe e salva um arquivo segundo as especificações de um header
+    def receiveFileUDP(self, header):
+        self.sock.settimeout(5)
+        filename = pathjoin("output", header[Socket.Header.FILENAME])
+        try:
+            with open(filename, "wb") as new_file:
+                msg_size = 0
+                while True:
+                    msg, _ = self.receiveUDP()
+                    msg_size += len(msg)
+                    new_file.write(msg)
+                    
+                    # parar quando tiver recebido todos os bytes especificados no header
+                    if msg_size == int(header[Socket.Header.DATA_LENGTH]):
+                        break
+                print(f"Arquivo salvo: {filename}")
+        except TimeoutError:
+            print ("Erro no recebimento do arquivo")
+        self.sock.settimeout(None)

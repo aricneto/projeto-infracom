@@ -10,37 +10,22 @@ Servidor UDP
 
 server = Socket(server=True)
 
-recebendo = False
-header = ""
+header = None
 
 while True:
-    if recebendo and header:
-        server.sock.settimeout(5)
-        filename = pathjoin("output", header[Socket.Header.FILENAME])
-        try:
-            with open(filename, "wb") as new_file:
-                msg_size = 0
-                while True:
-                    msg, _ = server.receiveUDP()
-                    msg_size += len(msg)
-                    new_file.write(msg)
-                    
-                    # parar quando tiver recebido todos os bytes especificados no header
-                    if msg_size == int(header[Socket.Header.DATA_LENGTH]):
-                        break
-                print(f"Arquivo salvo: {filename}")
-        except TimeoutError:
-            print ("Erro no recebimento do arquivo")
-        server.sock.settimeout(None)
-        recebendo = False
-
-    if not recebendo:
+    if header is None:
         header = server.receiveHeaderUDP()
 
-        if header:
-            recebendo = True
-
-        if header and header[Socket.Header.EXTRA] == "sdw":
+    else:
+        # comando de debug para desligar o servidor remotamente
+        if header[Socket.Header.EXTRA] == "sdw":
             break
+
+        # receber o arquivo
+        server.receiveFileUDP(header)
+        # resetar o estado de header para receber outro arquivo
+        header = None
+
+        
 
 server.sock.close()
