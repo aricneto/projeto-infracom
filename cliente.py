@@ -28,9 +28,7 @@ while True:
             filename = input("> Digite o nome do arquivo:\n> ")
             try:
                 with open(filename, "rb") as f:
-                    data = f.read()
-                    client.sendUDP(data, basename(filename))
-                    f.close()
+                    client.sendUDP(f.read(), basename(filename))
             except IOError:
                 print("Nome de arquivo inválido!")
         case "sdw":
