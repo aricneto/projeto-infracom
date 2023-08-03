@@ -33,11 +33,6 @@ while True:
                     f.close()
             except IOError:
                 print("Nome de arquivo inválido!")
-        case "filesize" | "fsz":
-            filename = "test_files/declaration.txt"
-            with open(filename, "rb") as f:
-                filesize = len(f.read())
-                print(f"Bytes do arquivo: {filesize}")
         case "sdw":
             client.sendUDP("sdw".encode())
     

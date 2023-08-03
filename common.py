@@ -27,6 +27,7 @@ class Socket:
     def sendUDP(self, msg, filename=""):
         # 1) calcular tamanho da mensagem em bytes
         MSGLEN = len(msg)
+        print(f"Enviando um arquivo de {MSGLEN} bytes")
         total_sent = 0
 
         # 2) enviar header da mensagem
@@ -38,7 +39,8 @@ class Socket:
         # 3) enviar mensagem parcelada em pacotes tamanho buffer_size
         while total_sent < MSGLEN: # enquanto a mensagem ainda não foi completamente enviada
             total_sent += self.sock.sendto(msg[total_sent:total_sent + self.buffer_size], self.ip)
-            print(f"> Bytes enviados: {total_sent}")
+            #print(f"> Bytes enviados: {total_sent}")
+        print(f"Arquivo enviado: {filename}")
 
     def receiveUDP(self):
         return self.sock.recvfrom(self.buffer_size)
