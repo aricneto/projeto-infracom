@@ -9,36 +9,33 @@ Servidor UDP
 
 server = Socket(server=True)
 
-recebido = ""
 recebendo = False
 header = ""
 
 while True:
-    msg, cliente = server.receiveUDP()
-
     if recebendo:
-        recebido += msg.decode()
-
-    if not recebendo and msg.decode()[:len(Socket.HEADER_START)] == Socket.HEADER_START:
-        recebendo = True
-        header = msg.decode().split(",")
-        print(header)
-
-    print("|", cliente, "| enviou |", msg.decode(), "|")
-
-    # arquivo inteiro recebido
-    if recebendo and len(recebido) == int(header[2]):
-        print(f"\n\nArquivo recebido por completo!\nHeader: {header}")
-
         filename = "output/output.txt"
-        
-        with open(filename, "w") as new_file:
-            new_file.write(recebido)
-
+        with open(filename, "wb") as new_file:
+            msg_size = 0
+            while True:
+                msg, _ = server.receiveUDP()
+                msg_size += len(msg)
+                new_file.write(msg)
+                
+                if msg_size == int(header[2]):
+                    break
+        print(f"Arquivo salvo: {filename}")
         recebendo = False
-        recebido = ""
 
-    if not recebendo and msg.decode() == "sdw":
-        break
+    if not recebendo:
+        msg, _ = server.receiveUDP()
+
+        if msg.decode()[:len(Socket.HEADER_START)] == Socket.HEADER_START:
+            recebendo = True
+            header = msg.decode().split(",")
+            print(header)
+
+        if msg.decode() == "sdw":
+            break
 
 server.sock.close()

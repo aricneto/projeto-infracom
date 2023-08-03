@@ -26,7 +26,7 @@ while True:
             client.sendUDP(client.header("msg").encode())
             client.sendUDP(mensagem.encode())
         case "arquivo" | "arq":
-            filename = "test_files/empty.txt"#input("> Digite o nome do arquivo:\n> ")
+            filename = "test_files/declaration.txt"#input("> Digite o nome do arquivo:\n> ")
             try:
                 with open(filename, "rb") as f:
                     data = f.read()
