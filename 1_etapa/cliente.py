@@ -8,7 +8,7 @@ Cliente UDP
 """
 
 # inicializar cliente
-client = Socket(port=1337, server=True)
+client = Socket(port=1337)
 
 CLIENT_DIR = "files_client"
 
@@ -17,12 +17,17 @@ if not os.path.exists(CLIENT_DIR):
     os.makedirs(CLIENT_DIR)
 
 
-print("Bem vindo ao transmissor de mensagens 3000\nDigite CTRL+X para sair")
-print("Comandos disponiveis:")
-print("- arquivo  | arq     : enviar arquivo")
-print("- mensagem | msg     : enviar mensagem")
-print("- shutdown | sdw     : desligar servidor")
-print("- exit     | ext     : sair do programa\n\n")
+print("Bem vindo ao transmissor de mensagens 3000")
+
+comandos = [
+    "Comandos disponiveis:",
+    "- arquivo  | arq     : enviar arquivo",
+    "- exit     | ext     : sair do programa"
+    "- sdw                : desligar servidor",
+]
+
+for comando in comandos:
+    print(comando)
 
 while True:
     msg = input("> ")
@@ -30,10 +35,6 @@ while True:
     match msg:
         case "exit" | "\x18" | "ext":
             break
-        case "mensagem" | "msg":
-            mensagem = input("> Digite sua mensagem:\n> ")
-            # enviar mensagem com o header mensagem
-            client.sendUDP(mensagem.encode())
         case "arquivo" | "arq":
             filename = input("> Digite o nome do arquivo:\n> ")
             try:
@@ -47,10 +48,14 @@ while True:
 
                 # receber de volta
                 header, _ = client.receiveHeaderUDP()
-                client.receiveFileUDP(header, path=CLIENT_DIR)
+                client.receiveFileUDP(header, path=CLIENT_DIR, append="c_")
             except IOError:
                 print("Nome de arquivo inválido!")
         case "sdw":
             client.sendUDP(port=5000, extra="sdw")
+        case _:
+            print ("Digite um comando válido!")
+            for comando in comandos:
+                print(comando)
 
 client.sock.close()
