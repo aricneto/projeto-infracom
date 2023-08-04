@@ -41,3 +41,4 @@ Para explicitar o funcionamento do código, o arquivo, quando recebido pelo serv
 
     exit | ext  : fechar o cliente
     sdw         : desligar o servidor
+    
