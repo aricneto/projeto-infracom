@@ -1,6 +1,7 @@
 import socket
 from enum import IntEnum
 from os.path import join as pathjoin
+from os.path import basename
 
 '''
 Funções comuns a serem usadas pelos sockets
@@ -70,9 +71,9 @@ class Socket:
         return (None, address)
         
     # Recebe e salva um arquivo segundo as especificações de um header
-    def receiveFileUDP(self, header, path="output"):
+    def receiveFileUDP(self, header, path="output", append=""):
         self.sock.settimeout(5)
-        filename = pathjoin(path, header[Socket.Header.FILENAME])
+        filename = pathjoin(path, append + header[Socket.Header.FILENAME])
         try:
             with open(filename, "wb") as new_file:
                 msg_size = 0
@@ -88,3 +89,4 @@ class Socket:
         except TimeoutError:
             print ("Erro no recebimento do arquivo")
         self.sock.settimeout(None)
+        return basename(filename)

@@ -12,7 +12,7 @@ server = Socket(port=5000, server=True)
 
 SERVER_DIR = "files_server"
 
-# inicializar pasta sever
+# inicializar pasta server
 if not os.path.exists(SERVER_DIR):
     os.makedirs(SERVER_DIR)
 
@@ -29,14 +29,14 @@ while True:
             break
 
         # receber o arquivo
-        server.receiveFileUDP(header, path=SERVER_DIR)
+        filename = server.receiveFileUDP(header, path=SERVER_DIR, append="s_")
         # enviar de volta
-        with open(pathjoin(SERVER_DIR, header[Socket.Header.FILENAME]), "rb") as f:
+        with open(pathjoin(SERVER_DIR, filename), "rb") as f:
             server.sendUDP(
                 ip=address[0],
                 port=address[1],
                 msg=f.read(),
-                filename=header[Socket.Header.FILENAME],
+                filename=filename,
             )
         # resetar o estado de header para receber outro arquivo
         header = None
