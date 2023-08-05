@@ -18,12 +18,12 @@ class Socket:
         DATA_LENGTH = 2
         EXTRA = 3
 
-    def __init__(self, sock=None, host="localhost", port=5000, buffer_size=1024, server=False):
+    def __init__(self, sock=None, ip="localhost", port=5000, buffer_size=1024, server=False):
         if sock is None:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         else:
             self.sock = sock
-        self.ip = (host, port)
+        self.ip = (ip, port)
         self.buffer_size = buffer_size
 
         if server:
@@ -70,8 +70,9 @@ class Socket:
         
         return (None, address)
         
-    # Recebe e salva um arquivo segundo as especificações de um header
+    # recebe e salva um arquivo segundo as especificações de um header
     def receiveFileUDP(self, header, path="output", append=""):
+        # enquanto estamos recebendo, aplicamos um timeout de 5 segundos (ver README)
         self.sock.settimeout(5)
         filename = pathjoin(path, append + header[Socket.Header.FILENAME])
         try:
@@ -88,5 +89,6 @@ class Socket:
                 print(f"Arquivo salvo: {filename}")
         except TimeoutError:
             print ("Erro no recebimento do arquivo")
+        # desligar o timeout
         self.sock.settimeout(None)
         return basename(filename)
