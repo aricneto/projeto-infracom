@@ -65,7 +65,7 @@ class Socket:
 
         if msg.decode()[:len(self.HEADER_START)] == self.HEADER_START:
             header = msg.decode().split(",")
-            print(f"Reader recebido: {header}")
+            print(f"Header recebido: {header}")
             return (header, address)
         
         return (None, address)
