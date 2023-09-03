@@ -1,3 +1,4 @@
+from sender import Sender
 from common import Socket
 from os.path import basename
 import os.path
@@ -8,7 +9,7 @@ Cliente UDP
 """
 
 # inicializar cliente
-client = Socket(port=1337)
+client = Sender()
 
 CLIENT_DIR = "files_client"
 
@@ -33,29 +34,13 @@ while True:
     msg = input("> ")
 
     match msg:
+        case "t" | "test":
+            client.rdt_send("abisuilson")
         case "exit" | "\x18" | "ext":
             break
-        case "arquivo" | "arq":
-            filename = input("> Digite o nome do arquivo:\n> ")
-            try:
-                # enviar o arquivo
-                with open(filename, "rb") as f:
-                    client.sendUDP(
-                        port=5000,
-                        msg=f.read(),
-                        filename=basename(filename),
-                    )
-
-                # receber de volta
-                header, _ = client.receiveHeaderUDP()
-                client.receiveFileUDP(header, path=CLIENT_DIR, append="c_")
-            except IOError:
-                print("Nome de arquivo inválido!")
-        case "sdw":
-            client.sendUDP(port=5000, extra="sdw")
         case _:
             print ("Digite um comando válido!")
             for comando in comandos:
                 print(comando)
 
-client.sock.close()
+# client.sock.close()

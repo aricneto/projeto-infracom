@@ -90,33 +90,23 @@ class wait_for_ack_0(State):
             acked = self.rdt_rcv()
 
             if (acked):
-                self.sender.change_state(wait_for_call_1())
+                self.sender.change_state(wait_for_call_0())
     
     def rdt_send(self, data) -> None:
         return super().rdt_send(data)
     
     def rdt_rcv(self) -> bool:
         rcvpkt, address = client.rdt_rcv()
-        if rcvpkt and client.isACK(rcvpkt, 0):
+        if rcvpkt and client.is_ACK(rcvpkt, 0):
             # todo: stop timer
             return True 
-        if rcvpkt and client.isACK(rcvpkt, 1):
+        if rcvpkt and client.is_ACK(rcvpkt, 1):
             return False
         else: 
             # timeout
-            client.sock.sendto(self.sender.get_sndpkt(), ("localhost", 5000))
+            client.sock.sendto(self.sender.get_sndpkt(), address)
             return False
         
     
     def exit_action(self) -> None:
         return super().exit_action()
-
-class wait_for_call_1(State):
-    def entry_action(self) -> None:
-        return super().entry_action()
-    def exit_action(self) -> None:
-        return super().exit_action()
-    def rdt_rcv(self) -> bool:
-        return super().rdt_rcv()
-    def rdt_send(self, data) -> None:
-        return super().rdt_send(data)
