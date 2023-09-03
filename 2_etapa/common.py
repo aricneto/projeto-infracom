@@ -10,6 +10,7 @@ Funções comuns a serem usadas pelos sockets
 
 class Socket: 
     HEADER_START = "HELLO"
+    PACKET_START = "HELLOPKT"
 
     # define as posições de cada um dos elementos do header de uma transferência
     class Header(IntEnum):
@@ -20,8 +21,9 @@ class Socket:
 
     class PacketHeader(IntEnum):
         START = 0
-        SEQ = 1
-        DATA = 2
+        ACK = 1
+        SEQ = 2
+        DATA = 3
 
     def __init__(self, sock=None, ip="localhost", port=5000, buffer_size=1024, server=False):
         if sock is None:
@@ -63,9 +65,45 @@ class Socket:
     def receiveUDP(self):
         return self.sock.recvfrom(self.buffer_size)
     
+    # Espera o recebimento de um pacote
+    def rdt_rcv(self):
+        msg, address = self.receiveUDP()
+        print(msg.decode())
+
+        if msg.decode()[:len(self.PACKET_START)] == self.PACKET_START:
+            packet = msg.decode().split(",")
+            print(f"# Pacote recebido: {packet}")
+            print(f"# seq={packet[self.PacketHeader.SEQ]}, ack={packet[self.PacketHeader.ACK]}\n")
+            return (packet, address)
+        
+        return (None, address)
+    
+    def make_pkt(self, seq, data, ack=0):
+        # 1) definir header da mensagem
+        #                            ↱ "bit" 'ack' do pacote
+        msg = [self.PACKET_START, str(ack), str(seq)]
+        #         ↳ identificador do header  ↳ "bit" 'seq' do pacote
+
+        # 2) calcular tamanho do header em bytes
+        HEADERLEN = len(msg)
+
+        if len(data) + HEADERLEN > self.buffer_size:
+            raise Exception ("Pacote não pode ser maior do que buffer_size")
+        
+        # 3) adicionar mensagem ao pacote
+        msg.append(data)
+        print(msg)
+
+        # 4) criar pacote
+        return ",".join(msg).encode()
+    
+    def isACK(self, rcvpkt, seq):
+        return int(rcvpkt[self.PacketHeader.ACK]) == 1 and int(rcvpkt[self.PacketHeader.SEQ]) == seq
+    
     # Espera o recebimento de um header
     def receiveHeaderUDP(self):
         msg, address = self.receiveUDP()
+        print(msg.decode())
 
         if msg.decode()[:len(self.HEADER_START)] == self.HEADER_START:
             header = msg.decode().split(",")
@@ -97,20 +135,5 @@ class Socket:
         self.sock.settimeout(None)
         return basename(filename)
     
-    def make_pkt(self, seq, data):
-        # 1) definir header da mensagem
-        #                            ↱ bit 'seq' do pacote
-        msg = [self.HEADER_START, seq]
-        #         ↳ identificador do header
-
-        # 2) calcular tamanho do header em bytes
-        HEADERLEN = len(msg)
-
-        if len(data) + HEADERLEN > self.buffer_size:
-            raise Exception ("Pacote não pode ser maior do que buffer_size")
+    
         
-        # 3) adicionar mensagem ao pacote
-        msg.append(data)
-
-        # 4) enviar mensagem
-        ",".join(msg).encode()

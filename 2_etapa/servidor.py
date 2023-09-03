@@ -17,29 +17,14 @@ if not os.path.exists(SERVER_DIR):
     os.makedirs(SERVER_DIR)
 
 
-header, address = None, []
+packet, address = None, []
 
 while True:
-    if header is None:
-        header, address = server.receiveHeaderUDP()
+    if packet is None:
+        packet, address = server.rdt_rcv()
 
     else:
-        # comando de debug para desligar o servidor remotamente
-        if header[Socket.Header.EXTRA] == "sdw":
-            break
-
-        # receber o arquivo
-        filename = server.receiveFileUDP(header, path=SERVER_DIR, append="s_")
-        # enviar de volta
-        with open(pathjoin(SERVER_DIR, filename), "rb") as f:
-            server.sendUDP(
-                ip=address[0],
-                port=address[1],
-                msg=f.read(),
-                filename=filename,
-            )
-        # resetar o estado de header para receber outro arquivo
-        header = None
+        packet = None
 
 
 server.sock.close()
