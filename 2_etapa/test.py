@@ -1,3 +1,4 @@
+from context import Sender
 from common import Socket
 from os.path import basename
 import os.path
@@ -8,7 +9,7 @@ Cliente UDP
 """
 
 # inicializar cliente
-client = Socket(port=1337)
+client = Sender()
 
 CLIENT_DIR = "files_client"
 
@@ -34,8 +35,7 @@ while True:
 
     match msg:
         case "t" | "test":
-            pkt = client.make_pkt(0, "abisuilon")
-            client.sock.sendto(pkt, ("localhost", 5000))
+            client.rdt_send("abisuilson")
         case "exit" | "\x18" | "ext":
             break
         case _:
@@ -43,4 +43,4 @@ while True:
             for comando in comandos:
                 print(comando)
 
-client.sock.close()
+# client.sock.close()
