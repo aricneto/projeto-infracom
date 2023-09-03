@@ -87,6 +87,7 @@ class wait_for_call(State):
         return super().entry_action()
     
     def rdt_send(self, data) -> None:
+        print (f"sending: {data}")
         sndpkt = client.make_pkt(self.seq, data)
         self.sender.set_sndpkt(sndpkt)
         client.sock.sendto(sndpkt, ("localhost", 5000))
@@ -109,6 +110,7 @@ class wait_for_ack(State):
 
             if (acked):
                 self.sender.change_state(wait_for_call(self.next_seq))
+                break
     
     def rdt_send(self, data) -> None:
         return super().rdt_send(data)

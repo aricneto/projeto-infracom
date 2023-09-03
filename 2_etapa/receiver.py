@@ -89,6 +89,7 @@ class wait_for_below(State):
 
             if (acked):
                 self.receiver.change_state(wait_for_below(seq=self.next_seq))
+                break
     
     def rdt_send(self, data) -> None:
         return super().rdt_send(data)
