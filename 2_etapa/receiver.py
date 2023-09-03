@@ -15,13 +15,16 @@ class Receiver:
             self.set_state(wait_for_below())
 
     def set_state(self, state: State):
-        print(f"Receiver: Transitioning to {type(state).__name__} seq={state.seq}")
+        msg = f"| Receiver: Mudando de estado para {type(state).__name__} seq={state.seq} |"
+        print(len(msg) * "-")
+        print(msg)
+        print(len(msg) * "-")
         self._state = state
         self._state.receiver = self
         self._state.entry_action()
 
     def print_state(self):
-        print(f"Receiver esta em: {type(self._state).__name__} seq={self._state.seq}")
+        print(f"\n| Receiver esta em: {type(self._state).__name__} seq={self._state.seq} |")
 
     def set_sndpkt(self, sndpkt):
         self._sndpkt = sndpkt
@@ -98,7 +101,6 @@ class wait_for_below(State):
         rcvpkt, address = client.rdt_rcv()
 
         if rcvpkt and client.has_SEQ(rcvpkt, self.seq):
-            print(f"has seq {self.seq}")
             # extract data
             # deliver data
             sndpkt = client.make_ack(self.seq)
@@ -106,7 +108,6 @@ class wait_for_below(State):
             client.sock.sendto(sndpkt, address)
             return True
         elif rcvpkt and client.has_SEQ(rcvpkt, self.next_seq):
-            print(f"has seq {self.next_seq}")
             sndpkt = client.make_ack(self.seq)
             self.receiver.set_sndpkt(sndpkt)
             client.sock.sendto(sndpkt, address)

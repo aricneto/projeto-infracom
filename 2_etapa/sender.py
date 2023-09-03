@@ -15,7 +15,10 @@ class Sender:
             self.set_state(wait_for_call())
 
     def set_state(self, state: State):
-        print(f"Sender: Transitioning to {type(state).__name__} seq={state.seq}")
+        msg = f"| Sender: Mudando de estado para {type(state).__name__} seq={state.seq} |"
+        print(len(msg) * "-")
+        print(msg)
+        print(len(msg) * "-")
         self._state = state
         self._state.sender = self
 

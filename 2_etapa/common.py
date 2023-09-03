@@ -68,12 +68,12 @@ class Socket:
     # Espera o recebimento de um pacote
     def rdt_rcv(self):
         msg, address = self.receiveUDP()
-        print(msg.decode())
 
         if msg.decode()[:len(self.PACKET_START)] == self.PACKET_START:
             packet = msg.decode().split(",")
+            print("\n### --- ###")
             print(f"# Pacote recebido: {packet}")
-            print(f"# seq={packet[self.PacketHeader.SEQ]}, ack={packet[self.PacketHeader.ACK]}\n")
+            print(f"# seq={packet[self.PacketHeader.SEQ]}, ack={packet[self.PacketHeader.ACK]}")
             return (packet, address)
         
         return (None, address)
@@ -92,7 +92,6 @@ class Socket:
         
         # 3) adicionar mensagem ao pacote
         msg.append(data)
-        print(msg)
 
         # 4) criar pacote
         return ",".join(msg).encode()
@@ -101,12 +100,20 @@ class Socket:
         return (seq + 1) % 2
     
     def is_ACK(self, rcvpkt, seq):
-        print (f"Checking if is ack, seq={seq}\nPacket: {rcvpkt}")
-        return int(rcvpkt[self.PacketHeader.ACK]) == 1 and int(rcvpkt[self.PacketHeader.SEQ]) == seq
+        pkt_ack = int(rcvpkt[self.PacketHeader.ACK])
+        pkt_seq = int(rcvpkt[self.PacketHeader.SEQ])
+        print (f"> Check: is_ACK?")
+        print (f"-> ack bit: {pkt_ack}")
+        print (f"-> seq bit: {pkt_seq}, expected: {seq}")
+        print (f"-> is_ACK: {pkt_ack == 1 and pkt_seq == seq}")
+        return pkt_ack == 1 and pkt_seq == seq
     
     def has_SEQ(self, rcvpkt, seq):
-        print (f"Checking if seq={seq}\nPacket: {rcvpkt}")
-        return int(rcvpkt[self.PacketHeader.SEQ]) == seq
+        pkt_seq = int(rcvpkt[self.PacketHeader.SEQ])
+        print (f"> Check: has_SEQ?")
+        print (f"-> seq bit: {pkt_seq}, expected: {seq}")
+        print (f"-> has_SEQ: {pkt_seq == seq}")
+        return pkt_seq == seq
     
     def make_ack(self, seq):
         return self.make_pkt(seq=seq, data="", ack=1)
