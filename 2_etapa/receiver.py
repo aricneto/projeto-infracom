@@ -12,16 +12,16 @@ class Receiver:
         if state is not None:
             self.set_state(state)
         else:
-            self.set_state(wait_for_below_0())
+            self.set_state(wait_for_below())
 
     def set_state(self, state: State):
-        print(f"Sender: Transitioning to {type(state).__name__}")
+        print(f"Receiver: Transitioning to {type(state).__name__} seq={state.seq}")
         self._state = state
         self._state.receiver = self
         self._state.entry_action()
 
     def print_state(self):
-        print(f"Sender esta em: {type(self._state).__name__}")
+        print(f"Receiver esta em: {type(self._state).__name__} seq={self._state.seq}")
 
     def set_sndpkt(self, sndpkt):
         self._sndpkt = sndpkt
@@ -42,13 +42,24 @@ class Receiver:
 
 
 class State(ABC):
+    def __init__(self, seq=0) -> None:
+        self._seq = seq
+
+    @property
+    def seq(self):
+        return self._seq
+
+    @property
+    def next_seq(self):
+        return (self._seq + 1) % 2
+    
     @property
     def receiver(self) -> Receiver:
-        return self._sender
+        return self._receiver
 
     @receiver.setter
-    def receiver(self, sender: Receiver) -> None:
-        self._sender = sender
+    def receiver(self, receiver: Receiver) -> None:
+        self._receiver = receiver
 
     @abstractmethod
     def rdt_send(self, data) -> None:
@@ -68,13 +79,16 @@ class State(ABC):
     def entry_action(self) -> None:
         pass
 
-class wait_for_below_0(State):
+class wait_for_below(State):
+    def __init__(self, seq=0) -> None:
+        super().__init__(seq)
+
     def entry_action(self) -> None:
         while True:
             acked = self.rdt_rcv()
 
             if (acked):
-                self.receiver.change_state(wait_for_below_0())
+                self.receiver.change_state(wait_for_below(seq=self.next_seq))
     
     def rdt_send(self, data) -> None:
         return super().rdt_send(data)
@@ -82,17 +96,17 @@ class wait_for_below_0(State):
     def rdt_rcv(self) -> bool:
         rcvpkt, address = client.rdt_rcv()
 
-        if rcvpkt and client.has_SEQ(rcvpkt, 0):
-            print("has seq 0")
+        if rcvpkt and client.has_SEQ(rcvpkt, self.seq):
+            print(f"has seq {self.seq}")
             # extract data
             # deliver data
-            sndpkt = client.make_ack(seq=0)
+            sndpkt = client.make_ack(self.seq)
             self.receiver.set_sndpkt(sndpkt)
             client.sock.sendto(sndpkt, address)
             return True
-        elif rcvpkt and client.has_SEQ(rcvpkt, 1):
-            print("has seq 1")
-            sndpkt = client.make_ack(seq=0)
+        elif rcvpkt and client.has_SEQ(rcvpkt, self.next_seq):
+            print(f"has seq {self.next_seq}")
+            sndpkt = client.make_ack(self.seq)
             self.receiver.set_sndpkt(sndpkt)
             client.sock.sendto(sndpkt, address)
             return False

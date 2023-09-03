@@ -36,6 +36,9 @@ while True:
     match msg:
         case "t" | "test":
             client.rdt_send("abisuilson")
+            client.rdt_send("aasdlaksdj")
+            client.rdt_send("paosdapodj")
+            client.rdt_send("paoodj")
         case "exit" | "\x18" | "ext":
             break
         case _:

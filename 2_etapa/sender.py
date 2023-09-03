@@ -12,15 +12,15 @@ class Sender:
         if state is not None:
             self.set_state(state)
         else:
-            self.set_state(wait_for_call_0())
+            self.set_state(wait_for_call())
 
     def set_state(self, state: State):
-        print(f"Sender: Transitioning to {type(state).__name__}")
+        print(f"Sender: Transitioning to {type(state).__name__} seq={state.seq}")
         self._state = state
         self._state.sender = self
 
     def print_state(self):
-        print(f"Sender esta em: {type(self._state).__name__}")
+        print(f"Sender esta em: {type(self._state).__name__} seq={self._state.seq}")
 
     def set_sndpkt(self, sndpkt):
         self._sndpkt = sndpkt
@@ -41,6 +41,18 @@ class Sender:
 
 
 class State(ABC):
+
+    def __init__(self, seq=0) -> None:
+        self._seq = seq
+
+    @property
+    def seq(self):
+        return self._seq
+
+    @property
+    def next_seq(self):
+        return (self._seq + 1) % 2
+
     @property
     def sender(self) -> Sender:
         return self._sender
@@ -67,16 +79,19 @@ class State(ABC):
     def entry_action(self) -> None:
         pass
 
-class wait_for_call_0(State):
+class wait_for_call(State):
+    def __init__(self, seq=0) -> None:
+        super().__init__(seq)
+
     def entry_action(self) -> None:
         return super().entry_action()
     
     def rdt_send(self, data) -> None:
-        sndpkt = client.make_pkt(0, data)
+        sndpkt = client.make_pkt(self.seq, data)
         self.sender.set_sndpkt(sndpkt)
         client.sock.sendto(sndpkt, ("localhost", 5000))
         # todo: start_timer
-        self.sender.change_state(wait_for_ack_0())
+        self.sender.change_state(wait_for_ack(self.seq))
     
     def rdt_rcv(self) -> bool:
         return super().rdt_rcv()
@@ -84,23 +99,26 @@ class wait_for_call_0(State):
     def exit_action(self) -> None:
         return super().exit_action()
 
-class wait_for_ack_0(State):
+class wait_for_ack(State):
+    def __init__(self, seq=0) -> None:
+        super().__init__(seq)
+
     def entry_action(self) -> None:
         while True:
             acked = self.rdt_rcv()
 
             if (acked):
-                self.sender.change_state(wait_for_call_0())
+                self.sender.change_state(wait_for_call(self.next_seq))
     
     def rdt_send(self, data) -> None:
         return super().rdt_send(data)
     
     def rdt_rcv(self) -> bool:
         rcvpkt, address = client.rdt_rcv()
-        if rcvpkt and client.is_ACK(rcvpkt, 0):
+        if rcvpkt and client.is_ACK(rcvpkt, self.seq):
             # todo: stop timer
             return True 
-        if rcvpkt and client.is_ACK(rcvpkt, 1):
+        if rcvpkt and client.is_ACK(rcvpkt, self.next_seq):
             return False
         else: 
             # timeout

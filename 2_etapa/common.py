@@ -97,6 +97,9 @@ class Socket:
         # 4) criar pacote
         return ",".join(msg).encode()
     
+    def next_seq(self, seq):
+        return (seq + 1) % 2
+    
     def is_ACK(self, rcvpkt, seq):
         print (f"Checking if is ack, seq={seq}\nPacket: {rcvpkt}")
         return int(rcvpkt[self.PacketHeader.ACK]) == 1 and int(rcvpkt[self.PacketHeader.SEQ]) == seq
