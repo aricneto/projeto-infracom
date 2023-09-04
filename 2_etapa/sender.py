@@ -1,7 +1,10 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+import threading
+import time
 
 from common import Socket
+from utils import pretty_print
 
 client = Socket(port=1337)
 
@@ -15,21 +18,37 @@ class Sender:
             self.set_state(wait_for_call())
 
     def set_state(self, state: State):
-        msg = f"| Sender: Mudando de estado para {type(state).__name__} seq={state.seq} |"
-        print(len(msg) * "-")
-        print(msg)
-        print(len(msg) * "-")
+        pretty_print(f"Sender: Mudando de estado para {type(state).__name__} seq={state.seq}")
         self._state = state
         self._state.sender = self
 
     def print_state(self):
-        print(f"Sender esta em: {type(self._state).__name__} seq={self._state.seq}")
+        pretty_print(f"Sender esta em: {type(self._state).__name__} seq={self._state.seq}")
+    
+    def start_timer(self, duration=2):
+        pretty_print("Iniciando temporizador", "*", "", "*")
+        self._timer = threading.Timer(duration, self.timeout)
+        self._timer.start()
 
-    def set_sndpkt(self, sndpkt):
+    def stop_timer(self):
+        pretty_print("Parando temporizador", "*", "", "*")
+        self._timer.cancel()
+
+    @property
+    def sndpkt(self):
+        return self._sndpkt
+    
+    @sndpkt.setter
+    def sndpkt(self, sndpkt):
         self._sndpkt = sndpkt
 
-    def get_sndpkt(self):
-        return self._sndpkt
+    @property
+    def address(self):
+        return self._address
+    
+    @address.setter
+    def address(self, address):
+        self._address = address
 
     def rdt_send(self, data):
         self._state.rdt_send(data)
@@ -41,6 +60,10 @@ class Sender:
         self._state.exit_action()
         self.set_state(state)
         self._state.entry_action()
+
+    def timeout(self) -> None:
+        print("Timeout, retransmitindo")
+        client.sock.sendto(self._sndpkt, self._address)
 
 
 class State(ABC):
@@ -90,11 +113,19 @@ class wait_for_call(State):
         return super().entry_action()
     
     def rdt_send(self, data) -> None:
-        print (f"sending: {data}")
+        print (f"Sending: {data}")
         sndpkt = client.make_pkt(self.seq, data)
-        self.sender.set_sndpkt(sndpkt)
+
+        # salvar pacote para retransmissao
+        self.sender.sndpkt = sndpkt
+
+        # enviar pacote
         client.sock.sendto(sndpkt, ("localhost", 5000))
-        # todo: start_timer
+        
+        # iniciar temporizador
+        self.sender.start_timer()
+
+        # mudar estrado
         self.sender.change_state(wait_for_ack(self.seq))
     
     def rdt_rcv(self) -> bool:
@@ -120,16 +151,18 @@ class wait_for_ack(State):
     
     def rdt_rcv(self) -> bool:
         rcvpkt, address = client.rdt_rcv()
+
+        # salvar endereço para retransmissao
+        self.sender.address = address
+
         if rcvpkt and client.is_ACK(rcvpkt, self.seq):
-            # todo: stop timer
+            # pausar temporizador
+            self.sender.stop_timer()
             return True 
-        if rcvpkt and client.is_ACK(rcvpkt, self.next_seq):
+        elif rcvpkt and client.is_ACK(rcvpkt, self.next_seq):
             return False
-        else: 
-            # timeout
-            client.sock.sendto(self.sender.get_sndpkt(), address)
+        else:
             return False
         
-    
     def exit_action(self) -> None:
         return super().exit_action()

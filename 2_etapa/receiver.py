@@ -2,6 +2,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 from common import Socket
+from utils import pretty_print
 
 client = Socket(port=5000, server=True)
 
@@ -15,16 +16,13 @@ class Receiver:
             self.set_state(wait_for_below())
 
     def set_state(self, state: State):
-        msg = f"| Receiver: Mudando de estado para {type(state).__name__} seq={state.seq} |"
-        print(len(msg) * "-")
-        print(msg)
-        print(len(msg) * "-")
+        pretty_print(f"Receiver: Mudando de estado para {type(state).__name__} seq={state.seq}")
         self._state = state
         self._state.receiver = self
         self._state.entry_action()
 
     def print_state(self):
-        print(f"\n| Receiver esta em: {type(self._state).__name__} seq={self._state.seq} |")
+        pretty_print(f"Receiver esta em: {type(self._state).__name__} seq={self._state.seq}")
 
     def set_sndpkt(self, sndpkt):
         self._sndpkt = sndpkt

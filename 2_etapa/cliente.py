@@ -35,14 +35,7 @@ while True:
 
     match msg:
         case "t" | "test":
-            print("um: ")
             client.rdt_send("abisuilson")
-            print("dois: ")
-            client.rdt_send("aasdlaksdj")
-            print("tres: ")
-            client.rdt_send("paosdapodj")
-            print("quatro: ")
-            client.rdt_send("paoodj")
         case "exit" | "\x18" | "ext":
             break
         case _:
