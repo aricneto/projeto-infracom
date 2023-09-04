@@ -25,6 +25,10 @@ while True:
         packet = server.wait_for_packet()
     else:
         print(f"Novo pacote: {packet}")
+        
+        if packet[:len(Socket.HEADER_START)] == Socket.HEADER_START:
+            header = packet.split(",")
+            print(f"Header recebido: {header}")
         packet = None
 
 

@@ -36,6 +36,10 @@ class Sender:
         self._timer.cancel()
 
     @property
+    def sock(self):
+        return client
+
+    @property
     def sndpkt(self):
         return self._sndpkt
     
@@ -51,8 +55,8 @@ class Sender:
     def address(self, address):
         self._address = address
 
-    def rdt_send(self, data):
-        self._state.rdt_send(data)
+    def rdt_send(self, data) -> int:
+        return self._state.rdt_send(data)
 
     def rdt_rcv(self):
         self._state.rdt_rcv()
@@ -90,7 +94,7 @@ class State(ABC):
         self._sender = sender
 
     @abstractmethod
-    def rdt_send(self, data) -> None:
+    def rdt_send(self, data) -> int:
         pass
 
     @abstractmethod
@@ -114,7 +118,7 @@ class wait_for_call(State):
     def entry_action(self) -> None:
         return super().entry_action()
     
-    def rdt_send(self, data) -> None:
+    def rdt_send(self, data) -> int:
         print (f"Sending: {data}")
         sndpkt = client.make_pkt(self.seq, data)
 
@@ -124,13 +128,15 @@ class wait_for_call(State):
         self.sender.address = ("localhost", 5000)
 
         # enviar pacote
-        client.udt_send(sndpkt, self.sender.address, self.sender.SEND_PROBABILITY)
+        bytes = client.udt_send(sndpkt, self.sender.address, self.sender.SEND_PROBABILITY)
         
         # iniciar temporizador
         self.sender.start_timer()
 
         # mudar estado
         self.sender.change_state(wait_for_ack(self.seq))
+
+        return bytes
     
     def rdt_rcv(self) -> bool:
         return super().rdt_rcv()
@@ -150,17 +156,17 @@ class wait_for_ack(State):
                 self.sender.change_state(wait_for_call(self.next_seq))
                 break
     
-    def rdt_send(self, data) -> None:
+    def rdt_send(self, data) -> int:
         return super().rdt_send(data)
     
     def rdt_rcv(self) -> bool:
-        rcvpkt, _ = client.rdt_rcv()
+        header, packet, _ = client.rdt_rcv()
 
-        if rcvpkt and client.is_ACK(rcvpkt, self.seq):
+        if header and client.is_ACK(header, self.seq):
             # pausar temporizador
             self.sender.stop_timer()
             return True 
-        elif rcvpkt and client.is_ACK(rcvpkt, self.next_seq):
+        elif header and client.is_ACK(header, self.next_seq):
             return False
         else: # simular perda
             return False

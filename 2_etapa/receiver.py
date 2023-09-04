@@ -27,6 +27,10 @@ class Receiver:
 
     def print_state(self):
         pretty_print(f"Receiver esta em: {type(self._state).__name__}")
+
+    @property
+    def sock(self):
+        return client
     
     @property
     def clients(self):
@@ -119,7 +123,7 @@ class State(ABC):
         pass
 
 class wait_for_below(State):   
-    def wait_for_packet(self) -> str:
+    def wait_for_packet(self):
         while True:
             acked = self.rdt_rcv()
 
@@ -136,18 +140,18 @@ class wait_for_below(State):
         return super().rdt_send(data)
     
     def rdt_rcv(self) -> bool:
-        rcvpkt, address = client.rdt_rcv()
+        header, packet, address = client.rdt_rcv()
         self.receiver.address = address
 
-        if rcvpkt and address and client.has_SEQ(rcvpkt, self.receiver.seq(address)):
+        if header and address and client.has_SEQ(header, self.receiver.seq(address)):
             # extract data
-            self.data = rcvpkt[client.PacketHeader.DATA]
+            self.data = packet
             
             sndpkt = client.make_ack(self.receiver.seq(address))
             self.receiver.sndpkt = sndpkt
             client.udt_send(sndpkt, address, self.receiver.SEND_PROBABILITY)
             return True
-        elif rcvpkt and address and client.has_SEQ(rcvpkt, self.receiver.next_seq(address)):
+        elif header and address and client.has_SEQ(header, self.receiver.next_seq(address)):
             sndpkt = client.make_ack(self.receiver.next_seq(address))
             self.receiver.sndpkt = sndpkt
             client.udt_send(sndpkt, address, self.receiver.SEND_PROBABILITY)

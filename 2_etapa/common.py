@@ -71,28 +71,35 @@ class Socket:
     def rdt_rcv(self):
         msg, address = self.receiveUDP()
 
-        if msg.decode()[:len(self.PACKET_START)] == self.PACKET_START:
-            packet = msg.decode().split(",")
+        if msg[:len(self.PACKET_START)].decode() == self.PACKET_START:
+            header = msg[:self.HEADERLEN() - 1].decode().split(",")
+            packet = msg[self.HEADERLEN() - 1:]
             print("\n### --- ###")
-            print(f"# Pacote recebido: {packet}")
-            print(f"# seq={packet[self.PacketHeader.SEQ]}, ack={packet[self.PacketHeader.ACK]}")
-            return (packet, address)
+            print(f"# Pacote recebido: {header}")
+            print(f"# seq={header[self.PacketHeader.SEQ]}, ack={header[self.PacketHeader.ACK]}")
+            return (header, packet, address)
         
-        return (None, address)
+        return (None, None, address)
     
-    # simula perdas
+    # envia pacotes via UDP. simula perdas de acordo com @param probability
     def udt_send(self, data, address, probability=1.0):
         rand = random.random()
         if rand < probability:
-            self.sock.sendto(data, address)
+            return self.sock.sendto(data, address)
         else:
             print("Simulando falha na transmissão!")
+            return 0
+
+    def HEADERLEN(self) -> int:
+        return len(','.join([self.PACKET_START, "0", "0", "0"]))
     
     def make_pkt(self, seq, data, ack=0):
         # 1) definir header da mensagem
         #                            ↱ "bit" 'ack' do pacote
         msg = [self.PACKET_START, str(ack), str(seq)]
         #         ↳ identificador do header  ↳ "bit" 'seq' do pacote
+
+        msg = ",".join(msg).encode()
 
         # 2) calcular tamanho do header em bytes
         HEADERLEN = len(msg)
@@ -101,10 +108,14 @@ class Socket:
             raise Exception ("Pacote não pode ser maior do que buffer_size")
         
         # 3) adicionar mensagem ao pacote
-        msg.append(data)
+        if isinstance(data, bytes):
+            msg = msg + b"," + data
+        else:
+            msg = msg + b"," + data.encode()
 
+        print(f"\n\npacote: {msg[:HEADERLEN]}")
         # 4) criar pacote
-        return ",".join(msg).encode()
+        return msg
     
     def next_seq(self, seq):
         return (seq + 1) % 2
