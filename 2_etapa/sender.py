@@ -10,7 +10,7 @@ client = Socket()
 
 # the sender class contains a _state that references the concrete state and setState method to change between states.
 class Sender:
-    SEND_PROBABILITY = 0.5
+    SEND_PROBABILITY = 1
 
     def __init__(self, state=None) -> None:
         if state is not None:

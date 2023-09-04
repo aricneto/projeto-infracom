@@ -20,12 +20,12 @@ if not os.path.exists(SERVER_DIR):
 
 packet, address = None, []
 
-# while True:
-#     if packet is None:
-#         packet, address = server.rdt_rcv()
-
-#     else:
-#         packet = None
+while True:
+    if packet is None:
+        packet = server.wait_for_packet()
+    else:
+        print(f"Novo pacote: {packet}")
+        packet = None
 
 
 # server.sock.close()

@@ -39,8 +39,6 @@ while True:
         case "exit" | "\x18" | "ext":
             break
         case _:
-            print ("Digite um comando válido!")
-            for comando in comandos:
-                print(comando)
+            client.rdt_send(msg)
 
 # client.sock.close()

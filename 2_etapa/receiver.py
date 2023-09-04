@@ -10,7 +10,7 @@ client = Socket(port=5000)
 
 # the sender class contains a _state that references the concrete state and setState method to change between states.
 class Receiver:
-    SEND_PROBABILITY = 0.5
+    SEND_PROBABILITY = 1
 
     def __init__(self, state=None) -> None:
         if state is not None:
@@ -43,11 +43,22 @@ class Receiver:
     def address(self, address):
         self._address = address
 
+    @property
+    def packet(self):
+        return self._packet
+    
+    @packet.setter
+    def packet(self, packet):
+        self._packet = packet
+
     def rdt_send(self, data):
-        self._state.rdt_send(data)
+        return self._state.rdt_send(data)
 
     def rdt_rcv(self):
-        self._state.rdt_rcv()
+        return self._state.rdt_rcv()
+
+    def wait_for_packet(self):
+        return self._state.wait_for_packet()
     
     def change_state(self, state: State):
         self._state.exit_action()
@@ -93,17 +104,32 @@ class State(ABC):
     def entry_action(self) -> None:
         pass
 
+    @abstractmethod
+    def wait_for_packet(self) -> str:
+        pass
+
 class wait_for_below(State):
     def __init__(self, seq=0) -> None:
         super().__init__(seq)
-
-    def entry_action(self) -> None:
+    
+    def wait_for_packet(self) -> str:
         while True:
             acked = self.rdt_rcv()
 
             if (acked):
                 self.receiver.change_state(wait_for_below(seq=self.next_seq))
-                break
+                self.receiver.packet = self.data
+                return self.receiver.packet
+
+    def entry_action(self) -> None:
+        return super().entry_action()
+        # while True:
+        #     acked = self.rdt_rcv()
+
+        #     if (acked):
+        #         self.receiver.change_state(wait_for_below(seq=self.next_seq))
+        #         self.receiver.packet = self.data
+        #         break
     
     def rdt_send(self, data) -> None:
         return super().rdt_send(data)
@@ -114,7 +140,8 @@ class wait_for_below(State):
 
         if rcvpkt and address and client.has_SEQ(rcvpkt, self.seq):
             # extract data
-            # deliver data
+            self.data = rcvpkt[client.PacketHeader.DATA]
+
             sndpkt = client.make_ack(self.seq)
             self.receiver.sndpkt = sndpkt
             client.udt_send(sndpkt, address, self.receiver.SEND_PROBABILITY)
