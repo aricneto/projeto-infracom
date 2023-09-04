@@ -1,3 +1,4 @@
+import random
 import socket
 from enum import IntEnum
 from os.path import join as pathjoin
@@ -66,7 +67,7 @@ class Socket:
         return self.sock.recvfrom(self.buffer_size)
     
     # Espera o recebimento de um pacote
-    def rdt_rcv(self):
+    def _rdt_rcv(self):
         msg, address = self.receiveUDP()
 
         if msg.decode()[:len(self.PACKET_START)] == self.PACKET_START:
@@ -77,6 +78,15 @@ class Socket:
             return (packet, address)
         
         return (None, address)
+    
+    # simula perdas
+    def rdt_rcv(self, probability=1.0):
+        rand = random.random()
+        if rand < probability:
+            print(rand)
+            return self._rdt_rcv()
+        else:
+            return None, None
     
     def make_pkt(self, seq, data, ack=0):
         # 1) definir header da mensagem

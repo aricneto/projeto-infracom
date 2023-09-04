@@ -98,14 +98,14 @@ class wait_for_below(State):
     def rdt_rcv(self) -> bool:
         rcvpkt, address = client.rdt_rcv()
 
-        if rcvpkt and client.has_SEQ(rcvpkt, self.seq):
+        if rcvpkt and address and client.has_SEQ(rcvpkt, self.seq):
             # extract data
             # deliver data
             sndpkt = client.make_ack(self.seq)
             self.receiver.set_sndpkt(sndpkt)
             client.sock.sendto(sndpkt, address)
             return True
-        elif rcvpkt and client.has_SEQ(rcvpkt, self.next_seq):
+        elif rcvpkt and address and client.has_SEQ(rcvpkt, self.next_seq):
             sndpkt = client.make_ack(self.seq)
             self.receiver.set_sndpkt(sndpkt)
             client.sock.sendto(sndpkt, address)

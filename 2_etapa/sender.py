@@ -64,6 +64,7 @@ class Sender:
     def timeout(self) -> None:
         print("Timeout, retransmitindo")
         client.sock.sendto(self._sndpkt, self._address)
+        self.start_timer()
 
 
 class State(ABC):
@@ -118,9 +119,11 @@ class wait_for_call(State):
 
         # salvar pacote para retransmissao
         self.sender.sndpkt = sndpkt
+        # salvar endereço para retransmissao
+        self.sender.address = ("localhost", 5000)
 
         # enviar pacote
-        client.sock.sendto(sndpkt, ("localhost", 5000))
+        client.sock.sendto(sndpkt, self.sender.address)
         
         # iniciar temporizador
         self.sender.start_timer()
@@ -150,10 +153,7 @@ class wait_for_ack(State):
         return super().rdt_send(data)
     
     def rdt_rcv(self) -> bool:
-        rcvpkt, address = client.rdt_rcv()
-
-        # salvar endereço para retransmissao
-        self.sender.address = address
+        rcvpkt, _ = client.rdt_rcv(0.9)
 
         if rcvpkt and client.is_ACK(rcvpkt, self.seq):
             # pausar temporizador
@@ -161,7 +161,8 @@ class wait_for_ack(State):
             return True 
         elif rcvpkt and client.is_ACK(rcvpkt, self.next_seq):
             return False
-        else:
+        else: # simular perda
+            time.sleep(2)
             return False
         
     def exit_action(self) -> None:
