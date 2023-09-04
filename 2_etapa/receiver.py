@@ -1,5 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+import threading
+from time import sleep
 
 from common import Socket
 from utils import pretty_print
@@ -24,11 +26,21 @@ class Receiver:
     def print_state(self):
         pretty_print(f"Receiver esta em: {type(self._state).__name__} seq={self._state.seq}")
 
-    def set_sndpkt(self, sndpkt):
+    @property
+    def sndpkt(self):
+        return self._sndpkt
+    
+    @sndpkt.setter
+    def sndpkt(self, sndpkt):
         self._sndpkt = sndpkt
 
-    def get_sndpkt(self):
-        return self._sndpkt
+    @property
+    def address(self):
+        return self._address
+    
+    @address.setter
+    def address(self, address):
+        self._address = address
 
     def rdt_send(self, data):
         self._state.rdt_send(data)
@@ -97,20 +109,22 @@ class wait_for_below(State):
     
     def rdt_rcv(self) -> bool:
         rcvpkt, address = client.rdt_rcv()
+        self.receiver.address = address
 
         if rcvpkt and address and client.has_SEQ(rcvpkt, self.seq):
             # extract data
             # deliver data
             sndpkt = client.make_ack(self.seq)
-            self.receiver.set_sndpkt(sndpkt)
-            client.sock.sendto(sndpkt, address)
+            self.receiver.sndpkt = sndpkt
+            client.udt_send(sndpkt, address, 0.5)
             return True
         elif rcvpkt and address and client.has_SEQ(rcvpkt, self.next_seq):
-            sndpkt = client.make_ack(self.seq)
-            self.receiver.set_sndpkt(sndpkt)
-            client.sock.sendto(sndpkt, address)
+            sndpkt = client.make_ack(self.next_seq)
+            self.receiver.sndpkt = sndpkt
+            client.udt_send(sndpkt, address, 0.5)
             return False
-        return False
+        else:
+            return False
     
     def exit_action(self) -> None:
         return super().exit_action()

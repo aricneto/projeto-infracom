@@ -10,6 +10,7 @@ client = Socket(port=1337)
 
 # the sender class contains a _state that references the concrete state and setState method to change between states.
 class Sender:
+    SEND_PROBABILITY = 0.5
 
     def __init__(self, state=None) -> None:
         if state is not None:
@@ -63,7 +64,7 @@ class Sender:
 
     def timeout(self) -> None:
         print("Timeout, retransmitindo")
-        client.sock.sendto(self._sndpkt, self._address)
+        client.udt_send(self._sndpkt, self._address, self.SEND_PROBABILITY)
         self.start_timer()
 
 
@@ -123,7 +124,7 @@ class wait_for_call(State):
         self.sender.address = ("localhost", 5000)
 
         # enviar pacote
-        client.sock.sendto(sndpkt, self.sender.address)
+        client.udt_send(sndpkt, self.sender.address, self.sender.SEND_PROBABILITY)
         
         # iniciar temporizador
         self.sender.start_timer()
@@ -153,7 +154,7 @@ class wait_for_ack(State):
         return super().rdt_send(data)
     
     def rdt_rcv(self) -> bool:
-        rcvpkt, _ = client.rdt_rcv(0.9)
+        rcvpkt, _ = client.rdt_rcv()
 
         if rcvpkt and client.is_ACK(rcvpkt, self.seq):
             # pausar temporizador
@@ -162,7 +163,6 @@ class wait_for_ack(State):
         elif rcvpkt and client.is_ACK(rcvpkt, self.next_seq):
             return False
         else: # simular perda
-            time.sleep(2)
             return False
         
     def exit_action(self) -> None:

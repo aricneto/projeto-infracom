@@ -67,7 +67,7 @@ class Socket:
         return self.sock.recvfrom(self.buffer_size)
     
     # Espera o recebimento de um pacote
-    def _rdt_rcv(self):
+    def rdt_rcv(self):
         msg, address = self.receiveUDP()
 
         if msg.decode()[:len(self.PACKET_START)] == self.PACKET_START:
@@ -80,13 +80,12 @@ class Socket:
         return (None, address)
     
     # simula perdas
-    def rdt_rcv(self, probability=1.0):
+    def udt_send(self, data, address, probability=1.0):
         rand = random.random()
         if rand < probability:
-            print(rand)
-            return self._rdt_rcv()
+            self.sock.sendto(data, address)
         else:
-            return None, None
+            pass
     
     def make_pkt(self, seq, data, ack=0):
         # 1) definir header da mensagem
