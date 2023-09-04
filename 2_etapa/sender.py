@@ -128,7 +128,7 @@ class wait_for_call(State):
         # iniciar temporizador
         self.sender.start_timer()
 
-        # mudar estrado
+        # mudar estado
         self.sender.change_state(wait_for_ack(self.seq))
     
     def rdt_rcv(self) -> bool:
