@@ -6,7 +6,7 @@ import time
 from common import Socket
 from utils import pretty_print
 
-client = Socket(port=1337)
+client = Socket()
 
 # the sender class contains a _state that references the concrete state and setState method to change between states.
 class Sender:

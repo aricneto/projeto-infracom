@@ -6,7 +6,7 @@ from time import sleep
 from common import Socket
 from utils import pretty_print
 
-client = Socket(port=5000, server=True)
+client = Socket(port=5000)
 
 # the sender class contains a _state that references the concrete state and setState method to change between states.
 class Receiver:

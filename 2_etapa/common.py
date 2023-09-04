@@ -26,16 +26,17 @@ class Socket:
         SEQ = 2
         DATA = 3
 
-    def __init__(self, sock=None, ip="localhost", port=5000, buffer_size=1024, server=False):
+    def __init__(self, sock=None, ip="localhost", port=None, buffer_size=1024):
         if sock is None:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         else:
             self.sock = sock
-        self.ip = (ip, port)
+
         self.buffer_size = buffer_size
 
-        if server:
-            self.sock.bind(self.ip)
+        if port and ip:
+            self.address = (ip, port)
+            self.sock.bind(self.address)
             
 
     def sendUDP(self, port, ip="localhost", msg=[], filename="", extra=""):
