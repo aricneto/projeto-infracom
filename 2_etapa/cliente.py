@@ -50,6 +50,8 @@ def main():
                         filename = "../test_files/cheems.png"
                     case "dec":
                         filename = "../test_files/declaration.txt"
+                    case "short":
+                        filename = "../test_files/short.txt"
                 try:
                     # enviar o arquivo
                     with open(filename, "rb") as f:

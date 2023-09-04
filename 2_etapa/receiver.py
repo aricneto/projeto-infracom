@@ -119,7 +119,7 @@ class State(ABC):
         pass
 
     @abstractmethod
-    def wait_for_packet(self) -> str:
+    def wait_for_packet(self) -> bytes:
         pass
 
 class wait_for_below(State):   
