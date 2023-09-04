@@ -10,6 +10,7 @@ client = Socket(port=5000, server=True)
 
 # the sender class contains a _state that references the concrete state and setState method to change between states.
 class Receiver:
+    SEND_PROBABILITY = 0.5
 
     def __init__(self, state=None) -> None:
         if state is not None:
@@ -116,12 +117,12 @@ class wait_for_below(State):
             # deliver data
             sndpkt = client.make_ack(self.seq)
             self.receiver.sndpkt = sndpkt
-            client.udt_send(sndpkt, address, 0.5)
+            client.udt_send(sndpkt, address, self.receiver.SEND_PROBABILITY)
             return True
         elif rcvpkt and address and client.has_SEQ(rcvpkt, self.next_seq):
             sndpkt = client.make_ack(self.next_seq)
             self.receiver.sndpkt = sndpkt
-            client.udt_send(sndpkt, address, 0.5)
+            client.udt_send(sndpkt, address, self.receiver.SEND_PROBABILITY)
             return False
         else:
             return False
