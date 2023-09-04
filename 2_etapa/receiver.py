@@ -17,15 +17,24 @@ class Receiver:
             self.set_state(state)
         else:
             self.set_state(wait_for_below())
+        self._clients = {}
 
     def set_state(self, state: State):
-        pretty_print(f"Receiver: Mudando de estado para {type(state).__name__} seq={state.seq}")
+        pretty_print(f"Receiver: Mudando de estado para {type(state).__name__}")
         self._state = state
         self._state.receiver = self
         self._state.entry_action()
 
     def print_state(self):
-        pretty_print(f"Receiver esta em: {type(self._state).__name__} seq={self._state.seq}")
+        pretty_print(f"Receiver esta em: {type(self._state).__name__}")
+    
+    @property
+    def clients(self):
+        return self._clients
+    
+    @clients.setter
+    def clients(self, clients):
+        self._clients = clients
 
     @property
     def sndpkt(self):
@@ -64,20 +73,21 @@ class Receiver:
         self._state.exit_action()
         self.set_state(state)
         self._state.entry_action()
-
-
-class State(ABC):
-    def __init__(self, seq=0) -> None:
-        self._seq = seq
-
-    @property
-    def seq(self):
-        return self._seq
-
-    @property
-    def next_seq(self):
-        return (self._seq + 1) % 2
     
+    # Retorna o numero de sequencia para um determinado cliente
+    def seq(self, client) -> int:
+        if (client in self.clients):
+            return self.clients[client]
+        else:
+            self.clients[client] = 0
+            return 0
+
+    # Retorna o próximo numero de sequencia para um determinado cliente
+    def next_seq(self, client) -> int:
+        return (self.seq(client) + 1) % 2
+
+
+class State(ABC):    
     @property
     def receiver(self) -> Receiver:
         return self._receiver
@@ -108,28 +118,19 @@ class State(ABC):
     def wait_for_packet(self) -> str:
         pass
 
-class wait_for_below(State):
-    def __init__(self, seq=0) -> None:
-        super().__init__(seq)
-    
+class wait_for_below(State):   
     def wait_for_packet(self) -> str:
         while True:
             acked = self.rdt_rcv()
 
             if (acked):
-                self.receiver.change_state(wait_for_below(seq=self.next_seq))
+                print(f"Proximo seq para {self.receiver.address}: {self.receiver.next_seq(self.receiver.address)}")
+                self.receiver.clients[self.receiver.address] = self.receiver.next_seq(self.receiver.address)
                 self.receiver.packet = self.data
                 return self.receiver.packet
 
     def entry_action(self) -> None:
         return super().entry_action()
-        # while True:
-        #     acked = self.rdt_rcv()
-
-        #     if (acked):
-        #         self.receiver.change_state(wait_for_below(seq=self.next_seq))
-        #         self.receiver.packet = self.data
-        #         break
     
     def rdt_send(self, data) -> None:
         return super().rdt_send(data)
@@ -138,16 +139,16 @@ class wait_for_below(State):
         rcvpkt, address = client.rdt_rcv()
         self.receiver.address = address
 
-        if rcvpkt and address and client.has_SEQ(rcvpkt, self.seq):
+        if rcvpkt and address and client.has_SEQ(rcvpkt, self.receiver.seq(address)):
             # extract data
             self.data = rcvpkt[client.PacketHeader.DATA]
-
-            sndpkt = client.make_ack(self.seq)
+            
+            sndpkt = client.make_ack(self.receiver.seq(address))
             self.receiver.sndpkt = sndpkt
             client.udt_send(sndpkt, address, self.receiver.SEND_PROBABILITY)
             return True
-        elif rcvpkt and address and client.has_SEQ(rcvpkt, self.next_seq):
-            sndpkt = client.make_ack(self.next_seq)
+        elif rcvpkt and address and client.has_SEQ(rcvpkt, self.receiver.next_seq(address)):
+            sndpkt = client.make_ack(self.receiver.next_seq(address))
             self.receiver.sndpkt = sndpkt
             client.udt_send(sndpkt, address, self.receiver.SEND_PROBABILITY)
             return False

@@ -30,6 +30,8 @@ comandos = [
 for comando in comandos:
     print(comando)
 
+msg = input("> ")
+
 while True:
     msg = input("> ")
 

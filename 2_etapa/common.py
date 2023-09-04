@@ -86,7 +86,7 @@ class Socket:
         if rand < probability:
             self.sock.sendto(data, address)
         else:
-            pass
+            print("Simulando falha na transmissão!")
     
     def make_pkt(self, seq, data, ack=0):
         # 1) definir header da mensagem
