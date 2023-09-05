@@ -9,7 +9,7 @@ from utils import pretty_print
 client = Socket(port=5000)
 
 class Receiver:
-    SEND_PROBABILITY = 1
+    SEND_PROBABILITY = 0.9
 
     def __init__(self, state=None) -> None:
         if state is not None:

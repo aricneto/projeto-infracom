@@ -34,7 +34,7 @@ def main():
                 isReceivingFile = True
                 print(f"Header recebido: {header}")
             if isReceivingFile:
-                server.sock.receive_file(header=header, receiver=server, path=SERVER_DIR)
+                server.sock.receive_file(receiver=server, header=header, path=SERVER_DIR)
                 isReceivingFile = False
 
             packet = None

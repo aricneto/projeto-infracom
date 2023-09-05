@@ -38,35 +38,12 @@ class Socket:
             self.address = (ip, port)
             self.sock.bind(self.address)
 
-    def send_file(self, port, sender, ip="localhost", msg=[], filename="", extra=""):
-        # 1) calcular tamanho da mensagem em bytes
-        MSGLEN = len(msg)
-        total_sent = 0
-        destination = (ip, port)
-
-        # 2) definir header da mensagem
-        #                            ↱ nome do arquivo
-        header = [Socket.HEADER_START, filename, str(MSGLEN), extra]
-        #         ↳ identificador do header   |            ↳ mensagem extra
-        #                                      ↳ tamanho da mensagem
-
-        # 3) enviar header da mensagem
-        print(f"Enviando um header de {len(header)} bytes")
-        sender.rdt_send(data=",".join(header), address=destination)
-
-        # 4) enviar mensagem parcelada em pacotes tamanho buffer_size
-        print(f"Enviando um arquivo de {MSGLEN} bytes")
-        while total_sent < MSGLEN: # enquanto a mensagem ainda não foi completamente enviada
-            next_sent = total_sent + 1024 - self.HEADERLEN
-            sender.rdt_send(data=msg[total_sent:next_sent], address=destination)
-            total_sent = next_sent
-            #print(f"> Bytes enviados: {total_sent}")
-
-        if total_sent > 0 and total_sent == MSGLEN: 
-            print(f"Arquivo enviado com sucesso: {filename}")
-
     def receiveUDP(self):
         return self.sock.recvfrom(self.buffer_size)
+    
+    @property
+    def HEADERLEN(self) -> int:
+        return len(','.join([self.PACKET_START, "0", "0", "0"]))
     
     # Espera o recebimento de um pacote
     def rdt_rcv(self):
@@ -82,7 +59,7 @@ class Socket:
         
         return (None, None, address)
     
-    # envia pacotes via UDP. simula perdas de acordo com @param probability
+    # Envia pacotes via UDP. simula perdas de acordo com probability
     def udt_send(self, data, address, probability=1.0):
         rand = random.random()
         print (f"Enviando: {data} para: {address}")
@@ -91,11 +68,8 @@ class Socket:
         else:
             print("Simulando falha na transmissão!")
             return 0
-
-    @property
-    def HEADERLEN(self) -> int:
-        return len(','.join([self.PACKET_START, "0", "0", "0"]))
     
+    # Cria um pacote com os bits seq e ack, mais um header
     def make_pkt(self, seq, data, ack=0):
         # 1) definir header da mensagem
         #                            ↱ "bit" 'ack' do pacote
@@ -116,13 +90,15 @@ class Socket:
         else:
             msg = msg + b"," + data.encode()
 
-        print(f"\n\npacote: {msg[:HEADERLEN]}")
+        print(f"\n\nPacote criado: {msg[:HEADERLEN]}")
         # 4) criar pacote
         return msg
     
+    # Retorna o proximo numero seq
     def next_seq(self, seq):
         return (seq + 1) % 2
     
+    # Verifica se um pacote tem o bit ACK e o seq é igual ao seq especificado
     def is_ACK(self, rcvpkt, seq):
         pkt_ack = int(rcvpkt[self.PacketHeader.ACK])
         pkt_seq = int(rcvpkt[self.PacketHeader.SEQ])
@@ -132,6 +108,7 @@ class Socket:
         print (f"-> is_ACK: {pkt_ack == 1 and pkt_seq == seq}")
         return pkt_ack == 1 and pkt_seq == seq
     
+    # Verifica se o seq de um pacote é igual ao seq especificado
     def has_SEQ(self, rcvpkt, seq):
         pkt_seq = int(rcvpkt[self.PacketHeader.SEQ])
         print (f"> Check: has_SEQ?")
@@ -154,7 +131,7 @@ class Socket:
         
         return (None, address)
         
-    # recebe e salva um arquivo segundo as especificações de um header
+    # Recebe e salva um arquivo segundo as especificações de um header, usando RDT 3.0
     def receive_file(self, header, receiver, path="output", append=""):
         filename = pathjoin(path, append + header[Socket.Header.FILENAME])
         try:
@@ -174,6 +151,34 @@ class Socket:
             print ("Erro no recebimento do arquivo")
         # desligar o timeout
         return basename(filename)
+    
+    # Envia um arquivo usando RDT 3.0
+    def send_file(self, port, sender, ip="localhost", msg=[], filename="", extra=""):
+        # 1) calcular tamanho da mensagem em bytes
+        MSGLEN = len(msg)
+        total_sent = 0
+        destination = (ip, port)
+
+        # 2) definir header da mensagem
+        #                              ↱ nome do arquivo
+        header = [Socket.HEADER_START, filename, str(MSGLEN), extra]
+        #         ↳ identificador do header     |              ↳ mensagem extra
+        #                                        ↳ tamanho da mensagem
+
+        # 3) enviar header da mensagem
+        print(f"Enviando um header de {len(header)} bytes")
+        sender.rdt_send(data=",".join(header), address=destination)
+
+        # 4) enviar mensagem parcelada em pacotes tamanho buffer_size
+        print(f"Enviando um arquivo de {MSGLEN} bytes")
+        while total_sent < MSGLEN: # enquanto a mensagem ainda não foi completamente enviada
+            next_sent = total_sent + 1024 - self.HEADERLEN
+            sender.rdt_send(data=msg[total_sent:next_sent], address=destination)
+            total_sent = next_sent
+            #print(f"> Bytes enviados: {total_sent}")
+
+        if total_sent > 0 and total_sent == MSGLEN: 
+            print(f"Arquivo enviado com sucesso: {filename}")
     
     
         

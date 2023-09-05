@@ -55,6 +55,8 @@ def main():
                         filename = "../test_files/declaration.txt"
                     case "short":
                         filename = "../test_files/short.txt"
+                    case "empty":
+                        filename = "../test_files/empty.txt"
                 try:
                     # enviar o arquivo
                     with open(filename, "rb") as f:
