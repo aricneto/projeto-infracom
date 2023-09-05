@@ -8,7 +8,7 @@ from common import Socket
 from utils import pretty_print
 
 class Receiver:
-    SEND_PROBABILITY = 0.9
+    SEND_PROBABILITY = 1
 
     def __init__(self, state=None, socket=None) -> None:
         if state is not None:
@@ -21,6 +21,8 @@ class Receiver:
             self._sock = Socket(port=5000)
         else:
             self._sock = socket
+        
+        self._incoming_pkt = None
 
 
     def set_state(self, state: State):
@@ -43,6 +45,14 @@ class Receiver:
     @clients.setter
     def clients(self, clients):
         self._clients = clients
+
+    @property
+    def incoming_pkt(self):
+        return self._incoming_pkt
+    
+    @incoming_pkt.setter
+    def incoming_pkt(self, incoming_pkt):
+        self._incoming_pkt = incoming_pkt
 
     @property
     def sndpkt(self):
@@ -144,7 +154,17 @@ class wait_for_below(State):
         return super().rdt_send(data)
     
     def rdt_rcv(self) -> bool:
-        header, packet, address = self.receiver.sock.rdt_rcv()
+        # receber pacote
+        while True:
+            if self.receiver.incoming_pkt is not None:
+                header, packet, address = self.receiver.incoming_pkt
+                self.receiver.incoming_pkt = None
+                break
+        
+        # Ignorar pacotes ACKs
+        if header and self.receiver.sock.has_ACK(header):
+            return False
+            
         self.receiver.rcv_address = address
 
         if header and address and self.receiver.sock.has_SEQ(header, self.receiver.seq(address)):

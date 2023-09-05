@@ -7,7 +7,7 @@ from common import Socket
 from utils import pretty_print
 
 class Sender:
-    SEND_PROBABILITY = 0.9
+    SEND_PROBABILITY = 1
 
     def __init__(self, state=None, socket=None) -> None:
         if state is not None:
@@ -19,6 +19,8 @@ class Sender:
              self._sock = Socket(port=5000)
         else:
              self._sock = socket
+
+        self._incoming_pkt = None
 
     def set_state(self, state: State):
         pretty_print(f"Sender: Mudando de estado para {type(state).__name__} seq={state.seq}")
@@ -44,6 +46,14 @@ class Sender:
     @property
     def sndpkt(self):
         return self._sndpkt
+    
+    @property
+    def incoming_pkt(self):
+        return self._incoming_pkt
+    
+    @incoming_pkt.setter
+    def incoming_pkt(self, incoming_pkt):
+        self._incoming_pkt = incoming_pkt
     
     @sndpkt.setter
     def sndpkt(self, sndpkt):
@@ -152,7 +162,6 @@ class wait_for_ack(State):
 
     def entry_action(self) -> None:
         while True:
-            print ("Lendo ACK")
             acked = self.rdt_rcv()
 
             if (acked):
@@ -163,16 +172,26 @@ class wait_for_ack(State):
         return super().rdt_send(data, address)
     
     def rdt_rcv(self) -> bool:
-        header, packet, _ = self.sender.sock.rdt_rcv()
-        print (f"Header recebido: {header}")
+        # receber pacote
+        while True:
+            if self.sender.incoming_pkt is not None:
+                header, packet, address = self.sender.incoming_pkt
+                self.sender.incoming_pkt = None
+                break
+
+        # Ignorar pacotes sem ACKs
+        if header and not self.sender.sock.has_ACK(header):
+            return False
+
+        print (f"Sender: Header recebido: {header}")
 
         if header and self.sender.sock.is_ACK(header, self.seq):
-            print ("ACK correto recebido")
+            print ("Sender: ACK correto recebido")
             # pausar temporizador
             self.sender.stop_timer()
             return True 
         elif header and self.sender.sock.is_ACK(header, self.next_seq):
-            print ("ACK errado recebido")
+            print ("Sender: ACK errado recebido")
             return False
         else: # simular perda
             return False

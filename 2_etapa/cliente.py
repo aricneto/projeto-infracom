@@ -26,11 +26,27 @@ if not os.path.exists(CLIENT_DIR):
 
 def main():
     print ("Iniciando cliente...")
-    send()
+
+    listen_thread = threading.Thread(target=listen)
+    send_thread = threading.Thread(target=send)
+    rcv_thread = threading.Thread(target=receive)
+    
+    listen_thread.start()
+    send_thread.start()
+    rcv_thread.start()
+    
+    listen_thread.join()
+    send_thread.join()
+    rcv_thread.join()
+    
+
+def listen():
+    while True:
+        header, packet, address = client.rdt_rcv()
+        sender.incoming_pkt = (header, packet, address)
+        receiver.incoming_pkt = (header, packet, address)
 
 def receive():
-    client.sock.settimeout(8)
-
     print ("Iniciando receiver...")
 
     packet, address = None, []
@@ -51,7 +67,6 @@ def receive():
                 if isReceivingFile:
                     filename = receiver.sock.receive_file(receiver=receiver, header=header, path=CLIENT_DIR)
                     isReceivingFile = False
-                    print("Enviando ultimo ACK")
 
                 packet = None
     except TimeoutError:
@@ -104,11 +119,6 @@ def send():
 
                 except IOError:
                     print("Nome de arquivo inválido!")
-
-                # receber arquivo de volta
-                print ("Recebendo de volta")
-                receive()
-                print ("Arquivo recebido de volta")
 
                 
             case _:

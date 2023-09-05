@@ -24,8 +24,21 @@ if not os.path.exists(SERVER_DIR):
 
 def main():
     print ("Iniciando servidor...")
-    receive()
+    listen_thread = threading.Thread(target=listen)
+    rcv_thread = threading.Thread(target=receive)
+    
+    listen_thread.start()
+    rcv_thread.start()
+    
+    listen_thread.join()
+    rcv_thread.join()
 
+def listen():
+    while True:
+        header, packet, address = server.rdt_rcv()
+        
+        sender.incoming_pkt = (header, packet, address)
+        receiver.incoming_pkt = (header, packet, address)
 
 def receive():
     print ("Iniciando receiver...")

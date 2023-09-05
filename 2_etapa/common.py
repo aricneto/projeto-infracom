@@ -62,7 +62,7 @@ class Socket:
     # Envia pacotes via UDP. simula perdas de acordo com probability
     def udt_send(self, data, address, probability=1.0):
         rand = random.random()
-        print (f"Enviando: {data[:12]}... para: {address}")
+        print (f"Enviando: {data[:32]}... para: {address}")
         if rand < probability:
             return self.sock.sendto(data, address)
         else:
@@ -98,22 +98,25 @@ class Socket:
     def next_seq(self, seq):
         return (seq + 1) % 2
     
+    # Verifica se um pacote tem o bit ACK 
+    def has_ACK(self, rcvpkt):
+        pkt_ack = int(rcvpkt[self.PacketHeader.ACK])
+        print (f"> Check: is_ACK?: {pkt_ack == 1}")
+        return pkt_ack == 1
+    
     # Verifica se um pacote tem o bit ACK e o seq é igual ao seq especificado
     def is_ACK(self, rcvpkt, seq):
         pkt_ack = int(rcvpkt[self.PacketHeader.ACK])
         pkt_seq = int(rcvpkt[self.PacketHeader.SEQ])
-        print (f"> Check: is_ACK?")
-        print (f"-> ack bit: {pkt_ack}")
-        print (f"-> seq bit: {pkt_seq}, expected: {seq}")
-        print (f"-> is_ACK: {pkt_ack == 1 and pkt_seq == seq}")
+        print (f"> Check: is_ACK?: {pkt_ack == 1 and pkt_seq == seq}")
+        print (f"-> ack bit: {pkt_ack} | seq bit: {pkt_seq}, expected: {seq}")
         return pkt_ack == 1 and pkt_seq == seq
     
     # Verifica se o seq de um pacote é igual ao seq especificado
     def has_SEQ(self, rcvpkt, seq):
         pkt_seq = int(rcvpkt[self.PacketHeader.SEQ])
-        print (f"> Check: has_SEQ?")
+        print (f"> Check: has_SEQ?: {pkt_seq == seq}")
         print (f"-> seq bit: {pkt_seq}, expected: {seq}")
-        print (f"-> has_SEQ: {pkt_seq == seq}")
         return pkt_seq == seq
     
     def make_ack(self, seq):
