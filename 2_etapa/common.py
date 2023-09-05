@@ -171,7 +171,7 @@ class Socket:
 
         # 4) enviar mensagem parcelada em pacotes tamanho buffer_size
         print(f"Enviando um arquivo de {MSGLEN} bytes")
-        while total_sent < MSGLEN: # enquanto a mensagem ainda não foi completamente enviada
+        while total_sent <= MSGLEN: # enquanto a mensagem ainda não foi completamente enviada
             next_sent = total_sent + 1024 - self.HEADERLEN
             sender.rdt_send(data=msg[total_sent:next_sent], address=destination)
             total_sent = next_sent
