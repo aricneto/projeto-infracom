@@ -62,7 +62,7 @@ class Socket:
     # Envia pacotes via UDP. simula perdas de acordo com probability
     def udt_send(self, data, address, probability=1.0):
         rand = random.random()
-        print (f"Enviando: {data} para: {address}")
+        print (f"Enviando: {data[:12]}... para: {address}")
         if rand < probability:
             return self.sock.sendto(data, address)
         else:

@@ -2,12 +2,13 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import threading
 from time import sleep
+import time
 
 from common import Socket
 from utils import pretty_print
 
 class Receiver:
-    SEND_PROBABILITY = 1
+    SEND_PROBABILITY = 0.9
 
     def __init__(self, state=None, socket=None) -> None:
         if state is not None:

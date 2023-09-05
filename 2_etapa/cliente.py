@@ -26,36 +26,36 @@ if not os.path.exists(CLIENT_DIR):
 
 def main():
     print ("Iniciando cliente...")
-
-    send_thread = threading.Thread(target=send)
-
-    send_thread.start()
-
-    send_thread.join()
+    send()
 
 def receive():
+    client.sock.settimeout(8)
+
     print ("Iniciando receiver...")
 
     packet, address = None, []
     isReceivingFile = False
     header = ""
 
-    while True:
-        if packet is None:
-            packet = receiver.wait_for_packet()
-        else:
-            print(f"Novo pacote: {packet}")
+    try:
+        while True:
+            if packet is None:
+                packet = receiver.wait_for_packet()
+            else:
+                print(f"Novo pacote: {packet}")
 
-            if not isReceivingFile and packet[:len(Socket.HEADER_START)] == Socket.HEADER_START.encode():
-                header = packet.decode().split(",")
-                isReceivingFile = True
-                print(f"Header recebido: {header}")
-            if isReceivingFile:
-                filename = receiver.sock.receive_file(receiver=receiver, header=header, path=CLIENT_DIR)
-                isReceivingFile = False
-                break
+                if not isReceivingFile and packet[:len(Socket.HEADER_START)] == Socket.HEADER_START.encode():
+                    header = packet.decode().split(",")
+                    isReceivingFile = True
+                    print(f"Header recebido: {header}")
+                if isReceivingFile:
+                    filename = receiver.sock.receive_file(receiver=receiver, header=header, path=CLIENT_DIR)
+                    isReceivingFile = False
+                    print("Enviando ultimo ACK")
 
-            packet = None
+                packet = None
+    except TimeoutError:
+        client.sock.settimeout(None)
 
 def send():
     print ("Iniciando sender...")
@@ -106,6 +106,7 @@ def send():
                     print("Nome de arquivo inválido!")
 
                 # receber arquivo de volta
+                print ("Recebendo de volta")
                 receive()
                 print ("Arquivo recebido de volta")
 

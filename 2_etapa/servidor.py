@@ -1,4 +1,5 @@
 from os.path import basename
+from time import sleep
 from receiver import Receiver
 from sender import Sender
 from common import Socket
@@ -23,12 +24,7 @@ if not os.path.exists(SERVER_DIR):
 
 def main():
     print ("Iniciando servidor...")
-
-    rcv_thread = threading.Thread(target=receive)
-
-    rcv_thread.start()
-
-    rcv_thread.join()
+    receive()
 
 
 def receive():
@@ -51,6 +47,8 @@ def receive():
             if isReceivingFile:
                 filename = receiver.sock.receive_file(receiver=receiver, header=header, path=SERVER_DIR)
                 isReceivingFile = False
+                sleep(1)
+                print ("Enviando de volta")
                 # Enviar de volta
                 with open(filename, "rb") as f:
                         sender.sock.send_file(
@@ -59,6 +57,7 @@ def receive():
                             msg=f.read(),
                             filename=basename(filename)
                         )
+                print ("Arquivo enviado de volta")
 
             packet = None
 

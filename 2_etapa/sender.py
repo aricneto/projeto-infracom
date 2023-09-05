@@ -7,7 +7,7 @@ from common import Socket
 from utils import pretty_print
 
 class Sender:
-    SEND_PROBABILITY = 1
+    SEND_PROBABILITY = 0.9
 
     def __init__(self, state=None, socket=None) -> None:
         if state is not None:
@@ -121,7 +121,7 @@ class wait_for_call(State):
         return super().entry_action()
     
     def rdt_send(self, data, address) -> int:
-        print (f"Sending: {data}")
+        print (f"Sending: {data[:12]}...")
         sndpkt = self.sender.sock.make_pkt(self.seq, data)
 
         # salvar pacote para retransmissao
