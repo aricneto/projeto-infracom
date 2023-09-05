@@ -6,7 +6,7 @@ from time import sleep
 from common import Socket
 from utils import pretty_print
 
-client = Socket(port=64532)
+client = Socket(port=5000)
 
 class Receiver:
     SEND_PROBABILITY = 1

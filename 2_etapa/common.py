@@ -37,9 +37,8 @@ class Socket:
         if port and ip:
             self.address = (ip, port)
             self.sock.bind(self.address)
-            
 
-    def sendUDP(self, port, ip="localhost", msg=[], filename="", extra=""):
+    def send_file(self, port, sender, ip="localhost", msg=[], filename="", extra=""):
         # 1) calcular tamanho da mensagem em bytes
         MSGLEN = len(msg)
         total_sent = 0
@@ -47,18 +46,20 @@ class Socket:
 
         # 2) definir header da mensagem
         #                            ↱ nome do arquivo
-        header = [self.HEADER_START, filename, str(MSGLEN), extra]
+        header = [Socket.HEADER_START, filename, str(MSGLEN), extra]
         #         ↳ identificador do header   |            ↳ mensagem extra
         #                                      ↳ tamanho da mensagem
 
         # 3) enviar header da mensagem
         print(f"Enviando um header de {len(header)} bytes")
-        self.sock.sendto(",".join(header).encode(), destination)
+        sender.rdt_send(data=",".join(header), address=destination)
 
         # 4) enviar mensagem parcelada em pacotes tamanho buffer_size
         print(f"Enviando um arquivo de {MSGLEN} bytes")
         while total_sent < MSGLEN: # enquanto a mensagem ainda não foi completamente enviada
-            total_sent += self.sock.sendto(msg[total_sent:total_sent + self.buffer_size], destination)
+            next_sent = total_sent + 1024 - self.HEADERLEN
+            sender.rdt_send(data=msg[total_sent:next_sent], address=destination)
+            total_sent = next_sent
             #print(f"> Bytes enviados: {total_sent}")
 
         if total_sent > 0 and total_sent == MSGLEN: 
@@ -72,8 +73,8 @@ class Socket:
         msg, address = self.receiveUDP()
 
         if msg[:len(self.PACKET_START)].decode() == self.PACKET_START:
-            header = msg[:self.HEADERLEN() - 1].decode().split(",")
-            packet = msg[self.HEADERLEN() - 1:]
+            header = msg[:self.HEADERLEN - 1].decode().split(",")
+            packet = msg[self.HEADERLEN - 1:]
             print("\n### --- ###")
             print(f"# Pacote recebido: {header}")
             print(f"# seq={header[self.PacketHeader.SEQ]}, ack={header[self.PacketHeader.ACK]}")
@@ -91,6 +92,7 @@ class Socket:
             print("Simulando falha na transmissão!")
             return 0
 
+    @property
     def HEADERLEN(self) -> int:
         return len(','.join([self.PACKET_START, "0", "0", "0"]))
     
@@ -141,7 +143,7 @@ class Socket:
         return self.make_pkt(seq=seq, data="", ack=1)
         
     # Espera o recebimento de um header
-    def receiveHeaderUDP(self):
+    def receive_header(self):
         msg, address = self.receiveUDP()
         print(msg.decode())
 
@@ -153,26 +155,24 @@ class Socket:
         return (None, address)
         
     # recebe e salva um arquivo segundo as especificações de um header
-    def receiveFileUDP(self, header, path="output", append=""):
-        # enquanto estamos recebendo, aplicamos um timeout de 5 segundos (ver README)
-        self.sock.settimeout(5)
+    def receive_file(self, header, receiver, path="output", append=""):
         filename = pathjoin(path, append + header[Socket.Header.FILENAME])
         try:
             with open(filename, "wb") as new_file:
                 msg_size = 0
                 while True:
-                    msg, _ = self.receiveUDP()
+                    msg = receiver.wait_for_packet()
                     msg_size += len(msg)
                     new_file.write(msg)
-                    
+                    print (f"Transferidos {msg_size} bytes")
                     # parar quando tiver recebido todos os bytes especificados no header
                     if msg_size == int(header[Socket.Header.DATA_LENGTH]):
+                        print("Transferência completa")
                         break
                 print(f"Arquivo salvo: {filename}")
         except TimeoutError:
             print ("Erro no recebimento do arquivo")
         # desligar o timeout
-        self.sock.settimeout(None)
         return basename(filename)
     
     

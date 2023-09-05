@@ -54,8 +54,8 @@ class Sender:
     def address(self, address):
         self._address = address
 
-    def rdt_send(self, data) -> int:
-        return self._state.rdt_send(data)
+    def rdt_send(self, data, address) -> int:
+        return self._state.rdt_send(data, address)
 
     def rdt_rcv(self):
         self._state.rdt_rcv()
@@ -93,7 +93,7 @@ class State(ABC):
         self._sender = sender
 
     @abstractmethod
-    def rdt_send(self, data) -> int:
+    def rdt_send(self, data, address) -> int:
         pass
 
     @abstractmethod
@@ -117,14 +117,14 @@ class wait_for_call(State):
     def entry_action(self) -> None:
         return super().entry_action()
     
-    def rdt_send(self, data) -> int:
+    def rdt_send(self, data, address) -> int:
         print (f"Sending: {data}")
         sndpkt = client.make_pkt(self.seq, data)
 
         # salvar pacote para retransmissao
         self.sender.sndpkt = sndpkt
         # salvar endereço para retransmissao
-        self.sender.address = ("localhost", 64532)
+        self.sender.address = address
 
         # enviar pacote
         bytes = client.udt_send(sndpkt, self.sender.address, self.sender.SEND_PROBABILITY)
@@ -156,8 +156,8 @@ class wait_for_ack(State):
                 self.sender.change_state(wait_for_call(self.next_seq))
                 break
     
-    def rdt_send(self, data) -> int:
-        return super().rdt_send(data)
+    def rdt_send(self, data, address) -> int:
+        return super().rdt_send(data, address)
     
     def rdt_rcv(self) -> bool:
         header, packet, _ = client.rdt_rcv()
