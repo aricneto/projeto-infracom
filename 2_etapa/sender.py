@@ -6,9 +6,8 @@ import time
 from common import Socket
 from utils import pretty_print
 
-client = Socket()
+client = Socket(port=16548)
 
-# the sender class contains a _state that references the concrete state and setState method to change between states.
 class Sender:
     SEND_PROBABILITY = 1
 
@@ -125,7 +124,7 @@ class wait_for_call(State):
         # salvar pacote para retransmissao
         self.sender.sndpkt = sndpkt
         # salvar endereço para retransmissao
-        self.sender.address = ("localhost", 5000)
+        self.sender.address = ("localhost", 64532)
 
         # enviar pacote
         bytes = client.udt_send(sndpkt, self.sender.address, self.sender.SEND_PROBABILITY)
@@ -150,6 +149,7 @@ class wait_for_ack(State):
 
     def entry_action(self) -> None:
         while True:
+            print ("Lendo ACK")
             acked = self.rdt_rcv()
 
             if (acked):
@@ -161,12 +161,15 @@ class wait_for_ack(State):
     
     def rdt_rcv(self) -> bool:
         header, packet, _ = client.rdt_rcv()
+        print (f"Header recebido: {header}")
 
         if header and client.is_ACK(header, self.seq):
+            print ("ACK correto recebido")
             # pausar temporizador
             self.sender.stop_timer()
             return True 
         elif header and client.is_ACK(header, self.next_seq):
+            print ("ACK errado recebido")
             return False
         else: # simular perda
             return False

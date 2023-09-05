@@ -19,10 +19,6 @@ if not os.path.exists(SERVER_DIR):
     os.makedirs(SERVER_DIR)
 
 def main():
-
-    
-
-
     packet, address = None, []
     isReceivingFile = False
     header = ""
@@ -39,6 +35,7 @@ def main():
                 print(f"Header recebido: {header}")
             if isReceivingFile:
                 receiveFileUDP(header, SERVER_DIR)
+                isReceivingFile = False
 
             packet = None
 
