@@ -6,16 +6,19 @@ import time
 from common import Socket
 from utils import pretty_print
 
-client = Socket(port=16548)
-
 class Sender:
-    SEND_PROBABILITY = 0.9
+    SEND_PROBABILITY = 1
 
-    def __init__(self, state=None) -> None:
+    def __init__(self, state=None, socket=None) -> None:
         if state is not None:
             self.set_state(state)
         else:
             self.set_state(wait_for_call())
+
+        if socket is None:
+             self._sock = Socket(port=5000)
+        else:
+             self._sock = socket
 
     def set_state(self, state: State):
         pretty_print(f"Sender: Mudando de estado para {type(state).__name__} seq={state.seq}")
@@ -36,7 +39,7 @@ class Sender:
 
     @property
     def sock(self):
-        return client
+        return self._sock
 
     @property
     def sndpkt(self):
@@ -67,7 +70,7 @@ class Sender:
 
     def timeout(self) -> None:
         print("Timeout, retransmitindo")
-        client.udt_send(self._sndpkt, self._address, self.SEND_PROBABILITY)
+        self._sock.udt_send(self._sndpkt, self._address, self.SEND_PROBABILITY)
         self.start_timer()
 
 
@@ -119,7 +122,7 @@ class wait_for_call(State):
     
     def rdt_send(self, data, address) -> int:
         print (f"Sending: {data}")
-        sndpkt = client.make_pkt(self.seq, data)
+        sndpkt = self.sender.sock.make_pkt(self.seq, data)
 
         # salvar pacote para retransmissao
         self.sender.sndpkt = sndpkt
@@ -127,7 +130,7 @@ class wait_for_call(State):
         self.sender.address = address
 
         # enviar pacote
-        bytes = client.udt_send(sndpkt, self.sender.address, self.sender.SEND_PROBABILITY)
+        bytes = self.sender.sock.udt_send(sndpkt, self.sender.address, self.sender.SEND_PROBABILITY)
         
         # iniciar temporizador
         self.sender.start_timer()
@@ -160,15 +163,15 @@ class wait_for_ack(State):
         return super().rdt_send(data, address)
     
     def rdt_rcv(self) -> bool:
-        header, packet, _ = client.rdt_rcv()
+        header, packet, _ = self.sender.sock.rdt_rcv()
         print (f"Header recebido: {header}")
 
-        if header and client.is_ACK(header, self.seq):
+        if header and self.sender.sock.is_ACK(header, self.seq):
             print ("ACK correto recebido")
             # pausar temporizador
             self.sender.stop_timer()
             return True 
-        elif header and client.is_ACK(header, self.next_seq):
+        elif header and self.sender.sock.is_ACK(header, self.next_seq):
             print ("ACK errado recebido")
             return False
         else: # simular perda

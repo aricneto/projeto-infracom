@@ -1,16 +1,19 @@
 from os.path import basename
 from receiver import Receiver
+from sender import Sender
 from common import Socket
 from os.path import join as pathjoin
 import os.path
+import threading
 
 """
 Servidor UDP
 
 """
 
-
-server = Receiver()
+server = Socket(port=5000)
+receiver = Receiver(socket=server)
+sender = Sender(socket=server)
 
 SERVER_DIR = "files_server"
 
@@ -19,13 +22,25 @@ if not os.path.exists(SERVER_DIR):
     os.makedirs(SERVER_DIR)
 
 def main():
+    print ("Iniciando servidor...")
+
+    rcv_thread = threading.Thread(target=receive)
+
+    rcv_thread.start()
+
+    rcv_thread.join()
+
+
+def receive():
+    print ("Iniciando receiver...")
+
     packet, address = None, []
     isReceivingFile = False
     header = ""
 
     while True:
         if packet is None:
-            packet = server.wait_for_packet()
+            packet = receiver.wait_for_packet()
         else:
             print(f"Novo pacote: {packet}")
 
@@ -34,8 +49,16 @@ def main():
                 isReceivingFile = True
                 print(f"Header recebido: {header}")
             if isReceivingFile:
-                server.sock.receive_file(receiver=server, header=header, path=SERVER_DIR)
+                filename = receiver.sock.receive_file(receiver=receiver, header=header, path=SERVER_DIR)
                 isReceivingFile = False
+                # Enviar de volta
+                with open(filename, "rb") as f:
+                        sender.sock.send_file(
+                            sender=sender,
+                            port=1337,
+                            msg=f.read(),
+                            filename=basename(filename)
+                        )
 
             packet = None
 

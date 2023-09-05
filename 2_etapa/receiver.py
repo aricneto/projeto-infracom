@@ -6,17 +6,21 @@ from time import sleep
 from common import Socket
 from utils import pretty_print
 
-client = Socket(port=5000)
-
 class Receiver:
-    SEND_PROBABILITY = 0.9
+    SEND_PROBABILITY = 1
 
-    def __init__(self, state=None) -> None:
+    def __init__(self, state=None, socket=None) -> None:
         if state is not None:
             self.set_state(state)
         else:
             self.set_state(wait_for_below())
         self._clients = {}
+
+        if socket is None:
+            self._sock = Socket(port=5000)
+        else:
+            self._sock = socket
+
 
     def set_state(self, state: State):
         pretty_print(f"Receiver: Mudando de estado para {type(state).__name__}")
@@ -29,7 +33,7 @@ class Receiver:
 
     @property
     def sock(self):
-        return client
+        return self._sock
     
     @property
     def clients(self):
@@ -48,12 +52,12 @@ class Receiver:
         self._sndpkt = sndpkt
 
     @property
-    def address(self):
-        return self._address
+    def rcv_address(self):
+        return self._rcv_address
     
-    @address.setter
-    def address(self, address):
-        self._address = address
+    @rcv_address.setter
+    def rcv_address(self, rcv_address):
+        self._rcv_address = rcv_address
 
     @property
     def packet(self):
@@ -127,8 +131,8 @@ class wait_for_below(State):
             acked = self.rdt_rcv()
 
             if (acked):
-                print(f"Proximo seq para {self.receiver.address}: {self.receiver.next_seq(self.receiver.address)}")
-                self.receiver.clients[self.receiver.address] = self.receiver.next_seq(self.receiver.address)
+                pretty_print(f"Receiver: Proximo seq para {self.receiver.rcv_address}: {self.receiver.next_seq(self.receiver.rcv_address)}")
+                self.receiver.clients[self.receiver.rcv_address] = self.receiver.next_seq(self.receiver.rcv_address)
                 self.receiver.packet = self.data
                 return self.receiver.packet
 
@@ -139,21 +143,21 @@ class wait_for_below(State):
         return super().rdt_send(data)
     
     def rdt_rcv(self) -> bool:
-        header, packet, address = client.rdt_rcv()
-        self.receiver.address = address
+        header, packet, address = self.receiver.sock.rdt_rcv()
+        self.receiver.rcv_address = address
 
-        if header and address and client.has_SEQ(header, self.receiver.seq(address)):
+        if header and address and self.receiver.sock.has_SEQ(header, self.receiver.seq(address)):
             # extract data
             self.data = packet
             
-            sndpkt = client.make_ack(self.receiver.seq(address))
+            sndpkt = self.receiver.sock.make_ack(self.receiver.seq(address))
             self.receiver.sndpkt = sndpkt
-            client.udt_send(sndpkt, address, self.receiver.SEND_PROBABILITY)
+            self.receiver.sock.udt_send(sndpkt, address, self.receiver.SEND_PROBABILITY)
             return True
-        elif header and address and client.has_SEQ(header, self.receiver.next_seq(address)):
-            sndpkt = client.make_ack(self.receiver.next_seq(address))
+        elif header and address and self.receiver.sock.has_SEQ(header, self.receiver.next_seq(address)):
+            sndpkt = self.receiver.sock.make_ack(self.receiver.next_seq(address))
             self.receiver.sndpkt = sndpkt
-            client.udt_send(sndpkt, address, self.receiver.SEND_PROBABILITY)
+            self.receiver.sock.udt_send(sndpkt, address, self.receiver.SEND_PROBABILITY)
             return False
         else:
             return False

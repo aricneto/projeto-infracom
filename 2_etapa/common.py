@@ -150,7 +150,7 @@ class Socket:
         except TimeoutError:
             print ("Erro no recebimento do arquivo")
         # desligar o timeout
-        return basename(filename)
+        return filename
     
     # Envia um arquivo usando RDT 3.0
     def send_file(self, port, sender, ip="localhost", msg=[], filename="", extra=""):
