@@ -79,34 +79,44 @@ def send():
     comandos = [
         "Comandos disponiveis:",
         "- arquivo  | arq     : enviar arquivo",
-        "- exit     | ext     : sair do programa",
-        "- sdw                : desligar servidor",
+        "- {qualquer string}  : enviar string"
+    ]
+
+    arquivos = [
+        "Arquivos de teste:",
+        "- cheems       : arquivo .png (66 kB)", 
+        "- declaration  : arquivo .txt longo (8182 bytes)", 
+        "- short        : arquivo .txt curto (28 bytes)", 
+        "- empty        : arquivo .txt vazio (0 bytes)", 
     ]
 
     for comando in comandos:
         print(comando)
 
-    msg = input("> ")
-
     while True:
-        msg = input("> ")
+        msg = input("Digite um comando:  ")
 
         match msg:
-            case "t" | "test":
-                sender.sock.send_file(sender=sender, port=5000, msg="abisiildisn")
             case "exit" | "\x18" | "ext":
                 break
             case "arq" | "arquivo":
-                filename = input("> Digite o nome do arquivo:\n> ")
+                print ("> Digite o nome do arquivo de teste, ou o caminho para um arquivo:")
+
+                for arquivo in arquivos:
+                    print(arquivo)
+
+                filename = input("> ")                
+
                 match filename:
                     case "cheems":
                         filename = "../test_files/cheems.png"
-                    case "dec":
+                    case "declaration":
                         filename = "../test_files/declaration.txt"
                     case "short":
                         filename = "../test_files/short.txt"
                     case "empty":
                         filename = "../test_files/empty.txt"
+
                 try:
                     # enviar o arquivo
                     with open(filename, "rb") as f:
@@ -120,7 +130,6 @@ def send():
                 except IOError:
                     print("Nome de arquivo inválido!")
 
-                
             case _:
                 sender.rdt_send(msg, server_address)
 
