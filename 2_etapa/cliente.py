@@ -16,6 +16,8 @@ receiver = Receiver(socket=client)
 
 # inicializar cliente
 CLIENT_DIR = "files_client"
+
+# definir servidor para onde vao ser enviados os arquivos
 server_ip = "localhost"
 server_port = 5000
 server_address = (server_ip, server_port)
@@ -122,7 +124,8 @@ def send():
                     with open(filename, "rb") as f:
                         sender.sock.send_file(
                             sender=sender,
-                            port=5000,
+                            ip=server_ip,
+                            port=server_port,
                             msg=f.read(),
                             filename=basename(filename)
                         )
