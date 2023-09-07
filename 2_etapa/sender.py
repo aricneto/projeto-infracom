@@ -81,7 +81,7 @@ class Sender:
         self._state.entry_action()
 
     def timeout(self) -> None:
-        print("Timeout, retransmitindo")
+        printc("===> Timeout, retransmitindo <===", bcolors.WARNING)
         self._sock.udt_send(self._sndpkt, self._address, self.SEND_PROBABILITY)
         self.start_timer()
 

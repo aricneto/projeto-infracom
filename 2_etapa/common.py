@@ -147,20 +147,21 @@ class Socket:
             tic = t()
             with open(filename, "wb") as new_file:
                 msg_size = 0
+                datalen = int(header[Socket.Header.DATA_LENGTH])
                 while True:
                     msg = receiver.wait_for_packet()
                     msg_size += len(msg)
                     new_file.write(msg)
-                    print (f"# Transferidos {msg_size} bytes")
+                    printc (f"== Transferidos {msg_size}/{datalen} bytes ==", bcolors.WARNING)
                     # parar quando tiver recebido todos os bytes especificados no header
-                    if msg_size == int(header[Socket.Header.DATA_LENGTH]):
-                        print("# Transferência completa")
+                    if msg_size == datalen:
+                        printc("== ! Transferência completa ! ==", bcolors.OKGREEN)
                         break
                 printc(f"== ! Arquivo salvo: {filename} ! ==", bcolors.OKGREEN)
             toc = t()
             print_elapsed(tic, toc, id="Socket (recebimento de arquivo)")
         except TimeoutError:
-            printc ("Erro no recebimento do arquivo", bcolors.FAIL)
+            printc ("-> Erro no recebimento do arquivo <-", bcolors.FAIL)
         # desligar o timeout
         return filename
     
