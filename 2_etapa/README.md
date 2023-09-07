@@ -16,28 +16,28 @@ Perdas de pacotes podem ser simuladas alterando a variável `SEND_PROBABILITY` e
 
 Logo com `SEND_PROBABILITY = 1`, os pacotes sempre irão ser enviados. Com `SEND_PROBABILITY = 0.5`, os pacotes serão enviados apenas 50% das vezes.
 
-    ```python
-    # ./sender.py
+```python
+# ./sender.py
 
-    class Sender:
-        SEND_PROBABILITY = 0.8 # ocasiona 20% de perdas
-    ```
+class Sender:
+    SEND_PROBABILITY = 0.8 # ocasiona 20% de perdas
+```
 
 O funcionamento desta simulação é definida em `common.py`:
 
-    ```python
-    # ./common.py
+```python
+# ./common.py
 
-    # Envia pacotes via UDP. simula perdas de acordo com probability
-    def udt_send(...probability=1.0):
-        ...
-        if rand < probability:
-            return self.sock.sendto(data, address)
-        else:
-            printc("== ! Simulando falha na transmissão ! ==", bcolors.FAIL)
-            return 0
-        ...
-    ```
+# Envia pacotes via UDP. simula perdas de acordo com probability
+def udt_send(...probability=1.0):
+    ...
+    if rand < probability:
+        return self.sock.sendto(data, address)
+    else:
+        printc("== ! Simulando falha na transmissão ! ==", bcolors.FAIL)
+        return 0
+    ...
+```
 
 ## Funcionamento
 
@@ -79,54 +79,53 @@ Para explicitar o funcionamento do código, o arquivo, quando recebido pelo serv
 
 Seguindo o que é definido no RDT 3.0, o `Sender` irá iniciar um temporizador (duração padrão de 2 segundos) toda vez que um pacote for transmitido. Caso o temporizador estoure, ele será retransmitido
 
-    ```python
-    # ./sender.py
+```python
+# ./sender.py
 
-    # alterar delay padrão do temporizador
-    def start_timer(self, duration=2):
-    ```
+# alterar delay padrão do temporizador
+def start_timer(self, duration=2):
+```
 
 ### Modificando o endereço do servidor/cliente
 
 O cliente e servidor, por padrão, estão ambos localizados em `localhost`, nas portas `1337` e `5000`, respectivamente. Para alterar o endereço de um deles, basta modificar o código que chama o inicializador da classe de utilidades `Socket`:
 
-    ```python
-    # ./cliente.py
+```python
+# ./cliente.py
 
-    # inicializar cliente na porta 1337, IP padrão (localhost)
-    client = Socket(port=1337)
-    ...
-    ```
+# inicializar cliente na porta 1337, IP padrão (localhost)
+client = Socket(port=1337)
+...
+```
 
-    ```python
-    # ./servidor.py
+```python
+# ./servidor.py
 
-    # inicializar servidor na porta 2000, IP localhost
-    server = Socket(ip="localhost", port=2000)
-    ...
-    ```
+# inicializar servidor na porta 2000, IP localhost
+server = Socket(ip="localhost", port=2000)
+...
+```
 
 Para alterar o destino de envio dos arquivos, basta modificar as seguintes variaveis em `cliente.py`:
 
-    ```python
+```python
+# ./cliente.py
 
-    # ./cliente.py
-
-    ...
-    # definir servidor para onde vao ser enviados os arquivos
-    server_ip = "localhost"
-    server_port = 5000
-    ...
-    ```
+...
+# definir servidor para onde vao ser enviados os arquivos
+server_ip = "localhost"
+server_port = 5000
+...
+```
 
 ### Envio entre máquinas diferentes
 
 Para testar o envio entre máquinas diferentes, certifique-se de definir o IP do servidor como `0.0.0.0`
 
-    ```python
-    # ./servidor.py
+```python
+# ./servidor.py
 
-    # inicializar servidor na porta 2000, IP 0.0.0.0
-    server = Socket(ip="0.0.0.0", port=2000)
-    ...
-    ```
+# inicializar servidor na porta 2000, IP 0.0.0.0
+server = Socket(ip="0.0.0.0", port=2000)
+...
+```
