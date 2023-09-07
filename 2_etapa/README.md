@@ -31,56 +31,44 @@ O cliente possui uma interface de comandos para facilitar a interação
 7. Quando a transferência é completada, o arquivo é enviado de volta ao cliente, repetindo as etapas a partir do passo 3
 8. Os arquivos do recebidos no cliente e servidor podem ser encontrados em `files_client/` e `files_server/` (ou nos caminhos especificados em `CLIENT_DIR` e `SERVER_DIR`)
 
-
 ### Nome dos arquivos
 
 Para explicitar o funcionamento do código, o arquivo, quando recebido pelo servidor, terá o codigo `s_` adicionado ao inicio do nome descrito no header.
+
    1. Quando este é recebido pelo cliente, ele terá o código `c_` adicionado ao inicio do nome descrito no header.
    2. Desta forma, sendo o arquivo original `nome.txt`, o servidor irá o salvar (e enviar ao cliente) como `s_nome.txt`, e o cliente irá o salvar como `c_s_nome.txt`
 
 ### Timeout
 
-Quando um header é recebido, o servidor espera 5 segundos para começar a receber os pacotes referentes ao header. Caso nenhum pacote seja recebido, ou a transferência seja interrompida, os pacotes recebidos até então são salvos em um arquivo, e um erro é emitido para alertar ao usuário que a transação foi incompleta e o arquivo pode estar corrompido
-
 ### Modificando o endereço do servidor/cliente
 
 O cliente e servidor, por padrão, estão ambos localizados em `localhost`, nas portas `1337` e `5000`, respectivamente. Para alterar o endereço de um deles, basta modificar o código que chama o inicializador da classe de utilidades `Socket`:
 
-```python
-# ./cliente.py
+    ```python
+    # ./cliente.py
 
-# inicializar cliente na porta 1337, IP padrão (localhost)
-client = Socket(port=1337)
-...
-```
+    # inicializar cliente na porta 1337, IP padrão (localhost)
+    client = Socket(port=1337)
+    ...
+    ```
 
-```python
-# ./servidor.py
+    ```python
+    # ./servidor.py
 
-# inicializar servidor na porta 2000, IP 192.168.0.15
-server = Socket(ip="192.168.0.15", port=2000, server=True)
-...
-```
+    # inicializar servidor na porta 2000, IP 192.168.0.15
+    server = Socket(ip="192.168.0.15", port=2000)
+    ...
+    ```
 
-Para alterar o destino de envio dos arquivos, basta modificar a chamada da função `sendUDP`:
+Para alterar o destino de envio dos arquivos, basta modificar as seguintes variaveis em `cliente.py`:
 
-```python
+    ```python
 
-# ./cliente.py
+    # ./cliente.py
 
-...
-client.sendUDP(
-    ip="192.168.0.15", # IP destino
-    port=5000,         # porta destino
-    msg=f.read(),
-    filename=basename(filename),
-)
-...
-```
-
-
-### Funções debug
-
-    exit | ext  : fechar o cliente
-    sdw         : desligar o servidor
-    
+    ...
+    # definir servidor para onde vao ser enviados os arquivos
+    server_ip = "localhost"
+    server_port = 5000
+    ...
+    ```
