@@ -65,7 +65,7 @@ def receive():
                     isReceivingFile = True
                     print(f"Header recebido: {header}")
                 if isReceivingFile:
-                    filename = receiver.sock.receive_file(receiver=receiver, header=header, path=CLIENT_DIR)
+                    filename = receiver.sock.receive_file(receiver=receiver, header=header, path=CLIENT_DIR, append="c_")
                     isReceivingFile = False
 
                 packet = None
