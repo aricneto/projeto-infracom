@@ -27,8 +27,6 @@ if not os.path.exists(CLIENT_DIR):
     os.makedirs(CLIENT_DIR)
 
 def main():
-    print ("Iniciando cliente...")
-
     listen_thread = threading.Thread(target=listen)
     send_thread = threading.Thread(target=send)
     rcv_thread = threading.Thread(target=receive)
@@ -132,6 +130,8 @@ def send():
 
                 except IOError:
                     print("Nome de arquivo inválido!")
+                except:
+                    print("Algum erro ocorreu")
 
             case _:
                 sender.rdt_send(msg, server_address)

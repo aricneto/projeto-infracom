@@ -40,6 +40,10 @@ class Socket:
             self.address = (ip, port)
             self.sock.bind(self.address)
 
+        hostname = socket.gethostname()
+        host = socket.gethostbyname(hostname)
+        printc(f"Iniciando socket em {hostname}: {host} [{port}]")
+
     def receiveUDP(self):
         return self.sock.recvfrom(self.buffer_size)
     
@@ -67,7 +71,11 @@ class Socket:
         rand = random.random()
         printc (f"-> Enviando: {data[:32]}... para: {address}", bcolors.OKBLUE)
         if rand < probability:
-            return self.sock.sendto(data, address)
+            try:
+                return self.sock.sendto(data, address)
+            except:
+                printc("== ! Erro na conexão ! ==", bcolors.FAIL)
+                return 0
         else:
             printc("== ! Simulando falha na transmissão ! ==", bcolors.FAIL)
             return 0

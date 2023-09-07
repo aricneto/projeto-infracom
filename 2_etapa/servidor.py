@@ -3,6 +3,7 @@ from time import sleep
 from receiver import Receiver
 from sender import Sender
 from common import Socket
+import socket
 from os.path import join as pathjoin
 import os.path
 import threading
@@ -23,7 +24,6 @@ if not os.path.exists(SERVER_DIR):
     os.makedirs(SERVER_DIR)
 
 def main():
-    print ("Iniciando servidor...")
     listen_thread = threading.Thread(target=listen)
     rcv_thread = threading.Thread(target=receive)
     
