@@ -2,6 +2,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import threading
 import time
+from time import process_time as t
+from utils import print_elapsed, printc, bcolors
 
 from common import Socket
 from utils import pretty_print
@@ -23,7 +25,7 @@ class Sender:
         self._incoming_pkt = None
 
     def set_state(self, state: State):
-        pretty_print(f"Sender: Mudando de estado para {type(state).__name__} seq={state.seq}")
+        printc(f"> Sender: Mudando de estado para {type(state).__name__} seq={state.seq}", bcolors.HEADER)
         self._state = state
         self._state.sender = self
 
@@ -131,7 +133,8 @@ class wait_for_call(State):
         return super().entry_action()
     
     def rdt_send(self, data, address) -> int:
-        print (f"Sending: {data[:12]}...")
+        tic = t()
+        print (f"-> Sender: enviando {data[:12]}...")
         sndpkt = self.sender.sock.make_pkt(self.seq, data)
 
         # salvar pacote para retransmissao
@@ -148,6 +151,9 @@ class wait_for_call(State):
         # mudar estado
         self.sender.change_state(wait_for_ack(self.seq))
 
+        toc = t()
+        print_elapsed(tic, toc, id="Sender (envio de pacote)")
+
         return bytes
     
     def rdt_rcv(self) -> bool:
@@ -161,11 +167,15 @@ class wait_for_ack(State):
         super().__init__(seq)
 
     def entry_action(self) -> None:
+        print("-> Sender: Esperando ACK")
+        tic = t()
         while True:
             acked = self.rdt_rcv()
 
             if (acked):
                 self.sender.change_state(wait_for_call(self.next_seq))
+                toc = t()
+                print_elapsed(tic, toc, id="Sender (espera de ACK)")
                 break
     
     def rdt_send(self, data, address) -> int:
@@ -183,15 +193,15 @@ class wait_for_ack(State):
         if header and not self.sender.sock.has_ACK(header):
             return False
 
-        print (f"Sender: Header recebido: {header}")
+        print (f"-> Sender: Header recebido: {header}")
 
         if header and self.sender.sock.is_ACK(header, self.seq):
-            print ("Sender: ACK correto recebido")
+            print ("-> Sender: ACK correto recebido")
             # pausar temporizador
             self.sender.stop_timer()
             return True 
         elif header and self.sender.sock.is_ACK(header, self.next_seq):
-            print ("Sender: ACK errado recebido")
+            print ("-> Sender: ACK errado recebido")
             return False
         else: # simular perda
             return False

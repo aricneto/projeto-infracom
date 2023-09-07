@@ -15,11 +15,11 @@ sender = Sender(socket=client)
 receiver = Receiver(socket=client)
 
 # inicializar cliente
-
 CLIENT_DIR = "files_client"
 server_ip = "localhost"
 server_port = 5000
 server_address = (server_ip, server_port)
+
 # inicializar pasta cliente
 if not os.path.exists(CLIENT_DIR):
     os.makedirs(CLIENT_DIR)

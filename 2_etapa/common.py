@@ -3,6 +3,8 @@ import socket
 from enum import IntEnum
 from os.path import join as pathjoin
 from os.path import basename
+from time import process_time as t
+from utils import print_elapsed, bcolors, printc
 
 '''
 Funções comuns a serem usadas pelos sockets
@@ -47,14 +49,15 @@ class Socket:
     
     # Espera o recebimento de um pacote
     def rdt_rcv(self):
+        tic = t()
         msg, address = self.receiveUDP()
 
         if msg[:len(self.PACKET_START)].decode() == self.PACKET_START:
             header = msg[:self.HEADERLEN - 1].decode().split(",")
             packet = msg[self.HEADERLEN - 1:]
-            print("\n### --- ###")
-            print(f"# Pacote recebido: {header}")
-            print(f"# seq={header[self.PacketHeader.SEQ]}, ack={header[self.PacketHeader.ACK]}")
+            print(f"-> Pacote recebido: seq={header[self.PacketHeader.SEQ]}, ack={header[self.PacketHeader.ACK]}")
+            toc = t()
+            print_elapsed(tic, toc, id="Socket (recebimento de pacote)")
             return (header, packet, address)
         
         return (None, None, address)
@@ -62,15 +65,16 @@ class Socket:
     # Envia pacotes via UDP. simula perdas de acordo com probability
     def udt_send(self, data, address, probability=1.0):
         rand = random.random()
-        print (f"Enviando: {data[:32]}... para: {address}")
+        printc (f"-> Enviando: {data[:32]}... para: {address}", bcolors.OKBLUE)
         if rand < probability:
             return self.sock.sendto(data, address)
         else:
-            print("Simulando falha na transmissão!")
+            printc("== ! Simulando falha na transmissão ! ==", bcolors.FAIL)
             return 0
     
     # Cria um pacote com os bits seq e ack, mais um header
     def make_pkt(self, seq, data, ack=0):
+        tic = t()
         # 1) definir header da mensagem
         #                            ↱ "bit" 'ack' do pacote
         msg = [self.PACKET_START, str(ack), str(seq)]
@@ -90,7 +94,9 @@ class Socket:
         else:
             msg = msg + b"," + data.encode()
 
-        print(f"\n\nPacote criado: {msg[:HEADERLEN]}")
+        print(f"-> Pacote criado: {msg[:HEADERLEN]}")
+        toc = t()
+        print_elapsed(tic, toc, id="Socket (criação de pacote)")
         # 4) criar pacote
         return msg
     
@@ -101,22 +107,22 @@ class Socket:
     # Verifica se um pacote tem o bit ACK 
     def has_ACK(self, rcvpkt):
         pkt_ack = int(rcvpkt[self.PacketHeader.ACK])
-        print (f"> Check: is_ACK?: {pkt_ack == 1}")
+        #print (f"# Check: is_ACK?: {pkt_ack == 1}")
         return pkt_ack == 1
     
     # Verifica se um pacote tem o bit ACK e o seq é igual ao seq especificado
     def is_ACK(self, rcvpkt, seq):
         pkt_ack = int(rcvpkt[self.PacketHeader.ACK])
         pkt_seq = int(rcvpkt[self.PacketHeader.SEQ])
-        print (f"> Check: is_ACK?: {pkt_ack == 1 and pkt_seq == seq}")
-        print (f"-> ack bit: {pkt_ack} | seq bit: {pkt_seq}, expected: {seq}")
+        #print (f"# Check: is_ACK?: {pkt_ack == 1 and pkt_seq == seq}")
+        #print (f"-> ack bit: {pkt_ack} | seq bit: {pkt_seq}, expected: {seq}")
         return pkt_ack == 1 and pkt_seq == seq
     
     # Verifica se o seq de um pacote é igual ao seq especificado
     def has_SEQ(self, rcvpkt, seq):
         pkt_seq = int(rcvpkt[self.PacketHeader.SEQ])
-        print (f"> Check: has_SEQ?: {pkt_seq == seq}")
-        print (f"-> seq bit: {pkt_seq}, expected: {seq}")
+        #print (f"# Check: has_SEQ?: {pkt_seq == seq}")
+        #print (f"-> seq bit: {pkt_seq}, expected: {seq}")
         return pkt_seq == seq
     
     def make_ack(self, seq):
@@ -129,7 +135,7 @@ class Socket:
 
         if msg.decode()[:len(self.HEADER_START)] == self.HEADER_START:
             header = msg.decode().split(",")
-            print(f"Header recebido: {header}")
+            print(f"-> Header recebido: {header}")
             return (header, address)
         
         return (None, address)
@@ -138,25 +144,29 @@ class Socket:
     def receive_file(self, header, receiver, path="output", append=""):
         filename = pathjoin(path, append + header[Socket.Header.FILENAME])
         try:
+            tic = t()
             with open(filename, "wb") as new_file:
                 msg_size = 0
                 while True:
                     msg = receiver.wait_for_packet()
                     msg_size += len(msg)
                     new_file.write(msg)
-                    print (f"Transferidos {msg_size} bytes")
+                    print (f"# Transferidos {msg_size} bytes")
                     # parar quando tiver recebido todos os bytes especificados no header
                     if msg_size == int(header[Socket.Header.DATA_LENGTH]):
-                        print("Transferência completa")
+                        print("# Transferência completa")
                         break
-                print(f"Arquivo salvo: {filename}")
+                printc(f"== ! Arquivo salvo: {filename} ! ==", bcolors.OKGREEN)
+            toc = t()
+            print_elapsed(tic, toc, id="Socket (recebimento de arquivo)")
         except TimeoutError:
-            print ("Erro no recebimento do arquivo")
+            printc ("Erro no recebimento do arquivo", bcolors.FAIL)
         # desligar o timeout
         return filename
     
     # Envia um arquivo usando RDT 3.0
     def send_file(self, port, sender, ip="localhost", msg=[], filename="", extra=""):
+        tic = t()
         # 1) calcular tamanho da mensagem em bytes
         MSGLEN = len(msg)
         total_sent = 0
@@ -169,11 +179,11 @@ class Socket:
         #                                        ↳ tamanho da mensagem
 
         # 3) enviar header da mensagem
-        print(f"Enviando um header de {len(header)} bytes")
+        print(f"-> Enviando um header de {len(header)} bytes")
         sender.rdt_send(data=",".join(header), address=destination)
 
         # 4) enviar mensagem parcelada em pacotes tamanho buffer_size
-        print(f"Enviando um arquivo de {MSGLEN} bytes")
+        print(f"-> Enviando um arquivo de {MSGLEN} bytes")
         while total_sent <= MSGLEN: # enquanto a mensagem ainda não foi completamente enviada
             next_sent = total_sent + 1024 - self.HEADERLEN
             sender.rdt_send(data=msg[total_sent:next_sent], address=destination)
@@ -181,7 +191,10 @@ class Socket:
             #print(f"> Bytes enviados: {total_sent}")
 
         if total_sent > 0 and total_sent == MSGLEN: 
-            print(f"Arquivo enviado com sucesso: {filename}")
+            printc(f"-> Arquivo enviado com sucesso: {filename}", bcolors.OKGREEN)
+
+        toc = t()
+        print_elapsed(tic, toc, id="Socket (envio de arquivo)")
     
     
         

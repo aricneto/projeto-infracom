@@ -1,11 +1,12 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 import threading
-from time import sleep
+from time import process_time as t
+from utils import print_elapsed
 import time
 
 from common import Socket
-from utils import pretty_print
+from utils import pretty_print, printc, bcolors
 
 class Receiver:
     SEND_PROBABILITY = 1
@@ -26,7 +27,7 @@ class Receiver:
 
 
     def set_state(self, state: State):
-        pretty_print(f"Receiver: Mudando de estado para {type(state).__name__}")
+        printc(f"> Receiver: Mudando de estado para {type(state).__name__}", bcolors.HEADER)
         self._state = state
         self._state.receiver = self
         self._state.entry_action()
@@ -138,13 +139,16 @@ class State(ABC):
 
 class wait_for_below(State):   
     def wait_for_packet(self):
+        tic = t()
         while True:
             acked = self.rdt_rcv()
 
             if (acked):
-                pretty_print(f"Receiver: Proximo seq para {self.receiver.rcv_address}: {self.receiver.next_seq(self.receiver.rcv_address)}")
+                printc(f"-> Receiver: Proximo seq para {self.receiver.rcv_address}: {self.receiver.next_seq(self.receiver.rcv_address)}", bcolors.HEADER)
                 self.receiver.clients[self.receiver.rcv_address] = self.receiver.next_seq(self.receiver.rcv_address)
                 self.receiver.packet = self.data
+                toc = t()
+                print_elapsed(tic, toc, id="Receiver (processamento de pacote)")
                 return self.receiver.packet
 
     def entry_action(self) -> None:
@@ -155,30 +159,40 @@ class wait_for_below(State):
     
     def rdt_rcv(self) -> bool:
         # receber pacote
+        print("\n-> Receiver: Esperando pacote")
+        tic = t()
         while True:
             if self.receiver.incoming_pkt is not None:
                 header, packet, address = self.receiver.incoming_pkt
                 self.receiver.incoming_pkt = None
                 break
+        toc = t()
+        print_elapsed(tic, toc, id="Receiver (espera de pacote)")
         
         # Ignorar pacotes ACKs
         if header and self.receiver.sock.has_ACK(header):
             return False
             
         self.receiver.rcv_address = address
-
+        
+        tic = t()
         if header and address and self.receiver.sock.has_SEQ(header, self.receiver.seq(address)):
+            print("-> Receiver: Envio de ACK")
             # extract data
             self.data = packet
             
             sndpkt = self.receiver.sock.make_ack(self.receiver.seq(address))
             self.receiver.sndpkt = sndpkt
             self.receiver.sock.udt_send(sndpkt, address, self.receiver.SEND_PROBABILITY)
+            toc = t()
+            print_elapsed(tic, toc, id="Receiver (envio de ACK)")
             return True
         elif header and address and self.receiver.sock.has_SEQ(header, self.receiver.next_seq(address)):
             sndpkt = self.receiver.sock.make_ack(self.receiver.next_seq(address))
             self.receiver.sndpkt = sndpkt
             self.receiver.sock.udt_send(sndpkt, address, self.receiver.SEND_PROBABILITY)
+            toc = t()
+            print_elapsed(tic, toc, id="Receiver (envio de ACK fora de sequencia)")
             return False
         else:
             return False
