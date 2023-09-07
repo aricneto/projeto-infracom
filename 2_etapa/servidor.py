@@ -66,7 +66,8 @@ def receive():
                 with open(filename, "rb") as f:
                         sender.sock.send_file(
                             sender=sender,
-                            port=1337,
+                            ip=receiver.rcv_address[0],
+                            port=receiver.rcv_address[1],
                             msg=f.read(),
                             filename=basename(filename)
                         )
