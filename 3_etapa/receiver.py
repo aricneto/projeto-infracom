@@ -8,7 +8,7 @@ import time
 from common import Socket
 from utils import pretty_print, printc, bcolors
 
-DEBUG = True
+DEBUG = False
 
 class Receiver:
     SEND_PROBABILITY = 1

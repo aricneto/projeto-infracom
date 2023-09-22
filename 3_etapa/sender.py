@@ -8,7 +8,7 @@ from utils import print_elapsed, printc, bcolors
 from common import Socket
 from utils import pretty_print
 
-DEBUG = True
+DEBUG = False
 
 class Sender:
     SEND_PROBABILITY = 1
@@ -195,7 +195,8 @@ class wait_for_ack(State):
             acked = self.rdt_rcv()
 
             if (acked):
-                printc(f"> Sender: Mudando de estado para wait for call seq={self.sender.next_seq(self.sender.address)}", bcolors.HEADER)
+                if DEBUG:
+                    printc(f"> Sender: Mudando de estado para wait for call seq={self.sender.next_seq(self.sender.address)}", bcolors.HEADER)
                 self.sender.clients[self.sender.address] = self.sender.next_seq(self.sender.address)
                 self.sender.change_state(wait_for_call(self.sender.seq(self.sender.address)))
                 toc = t()
