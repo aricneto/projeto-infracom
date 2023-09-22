@@ -1,5 +1,7 @@
 from os.path import basename
 from time import sleep
+from datetime import datetime
+from commands import Commands
 from receiver import Receiver
 from sender import Sender
 from common import Socket
@@ -59,10 +61,23 @@ def receive():
             print(f"Novo pacote: {packet}")
             print(f"from: {g_address}")
 
-            original_sender = g_address
-            for client in receiver.clients:
-                if client != original_sender:
-                    sender.rdt_send(packet, client)
+            receive_time = datetime.now().strftime('%H:%M:%S')
+
+            # so enviar se souber de onde veio
+            if g_address:
+                msg = packet.decode()
+
+                original_sender = g_address
+
+                # anunciar usuario
+                if msg.endswith(Commands.USER_ENTERED):
+                    formatted_msg = f"servidor: {msg}"
+                else:
+                    formatted_msg = f"{original_sender[0]}:{original_sender[1]}/~{msg} <{receive_time}>"
+
+                for client in receiver.clients:
+                    if client != original_sender:
+                        sender.rdt_send(formatted_msg.encode(), client)
 
             packet = None
 

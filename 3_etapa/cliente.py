@@ -1,3 +1,4 @@
+from commands import Commands
 from sender import Sender
 from receiver import Receiver
 from common import Socket
@@ -27,7 +28,20 @@ server_address = (server_ip, server_port)
 if not os.path.exists(CLIENT_DIR):
     os.makedirs(CLIENT_DIR)
 
+username = None
+
 def main():
+    global username
+    # login
+    print(f"Bem vindo à sala de chat. Digite '{Commands.LOGIN_CMD}' para se conectar")
+    
+    while True: 
+        msg = input()
+        if msg.startswith(Commands.LOGIN_CMD):
+            username = msg[len(Commands.LOGIN_CMD):]
+            if len(username) > 0:
+                break
+    
     listen_thread = threading.Thread(target=listen)
     send_thread = threading.Thread(target=send)
     rcv_thread = threading.Thread(target=receive)
@@ -54,17 +68,45 @@ def receive():
         if packet is None:
             packet = receiver.wait_for_packet()
         else:
-            print(f"Novo pacote: {packet}")
+            print(packet.decode())
             packet = None
 
 def send():
+    global username
+    print (f"Bem vindo {username}!\n")
+
+    greeting = f"{username}{Commands.USER_ENTERED}"
+    sender.rdt_send(greeting, server_address)
+
+    print (f"Digite sua mensagem!")
+
     while True:
-        msg = input("Digite um comando:  ")
+        msg = input("")
+        send_msg = f"{username}: {msg}"
 
         match msg:
-            case "bye":
+            case s if s.startswith(Commands.ADD_FRIEND_CMD):
+                friend = s[len(Commands.ADD_FRIEND_CMD):]
+                print (f"add friend {friend}")
+                pass
+            case s if s.startswith(Commands.REMOVE_FRIEND_CMD):
+                friend = s[len(Commands.REMOVE_FRIEND_CMD):]
+                print (f"remove friend {friend}")
+                pass
+            case s if s.startswith(Commands.BAN_CMD):
+                user = s[len(Commands.BAN_CMD):]
+                print (f"ban user {user}")
+                pass
+            case s if s.startswith(Commands.SHOW_LIST_CMD):
+                print (f"show list")
+                pass
+            case s if s.startswith(Commands.SHOW_FRIEND_LIST_CMD):
+                print (f"show friend list")
+                pass
+            case s if s.startswith(Commands.LOGOUT_CMD):
+                print ("Deslogado! Feche o terminal para sair")
                 break
             case _:
-                sender.rdt_send(msg, server_address)
+                sender.rdt_send(send_msg, server_address)
 
 main()
