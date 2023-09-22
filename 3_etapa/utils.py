@@ -1,4 +1,5 @@
 from enum import StrEnum
+import re
 
 
 def pretty_print(msg, gutter="|", roof="-", floor="-"):
@@ -26,3 +27,18 @@ class bcolors(StrEnum):
     ENDC = '\033[0m',
     BOLD = '\033[1m',
     UNDERLINE = '\033[4m'
+
+def extract_msg(msg):
+    # regex para extrair nome e mensagem de uma mensagem
+    reg = r'~(.+): (.+) <\d+:\d+:\d+>'
+
+    match = re.search(reg, msg)
+    
+    if match:
+        # extrair nome e mensagem
+        username = match.group(1)
+        message = match.group(2)
+        
+        return (username, message)
+    else:
+        return (None, None)

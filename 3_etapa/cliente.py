@@ -3,6 +3,7 @@ from sender import Sender
 from receiver import Receiver
 from common import Socket
 from os.path import basename
+from utils import extract_msg
 import os.path
 import threading
 import random
@@ -23,6 +24,7 @@ CLIENT_DIR = "files_client"
 server_ip = "127.0.0.1"
 server_port = 5000
 server_address = (server_ip, server_port)
+friends = []
 
 # inicializar pasta cliente
 if not os.path.exists(CLIENT_DIR):
@@ -68,7 +70,13 @@ def receive():
         if packet is None:
             packet = receiver.wait_for_packet()
         else:
-            print(packet.decode())
+            msg = packet.decode()
+            sender_name, message = extract_msg(msg)
+
+            if sender_name and message:
+                if sender_name in friends:
+                    msg = msg.replace(sender_name, f"[amigo] {sender_name}")
+                print(msg)
             packet = None
 
 def send():
@@ -87,11 +95,19 @@ def send():
         match msg:
             case s if s.startswith(Commands.ADD_FRIEND_CMD):
                 friend = s[len(Commands.ADD_FRIEND_CMD):]
-                print (f"add friend {friend}")
+                if friend not in friends:
+                    friends.append(friend)
+                    print (f"add friend: {friend}\nfriends: {friends}")
+                else:
+                    print("este usuario já é seu amigo")
                 pass
             case s if s.startswith(Commands.REMOVE_FRIEND_CMD):
                 friend = s[len(Commands.REMOVE_FRIEND_CMD):]
-                print (f"remove friend {friend}")
+                if friend in friends:
+                    friends.remove(friend)
+                    print (f"remove friend: {friend}\nfriends: {friends}")
+                else: 
+                    print("nao há amigo com este nome")
                 pass
             case s if s.startswith(Commands.BAN_CMD):
                 user = s[len(Commands.BAN_CMD):]
