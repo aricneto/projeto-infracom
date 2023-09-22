@@ -43,3 +43,16 @@ def extract_msg(msg):
         return (address, username, message)
     else:
         return (None, None, None)
+    
+def extract_msg_server(msg):
+    reg = r'(.+): (.+)'
+
+    match = re.search(reg, msg)
+
+    if match:
+        username = match.group(1)
+        message = match.group(2)
+
+        return (username, message)
+    else:
+        return (None, None)

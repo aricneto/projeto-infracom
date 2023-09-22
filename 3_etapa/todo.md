@@ -6,7 +6,7 @@
 |---------------------------------------|-------------------------------------|--|
 | Conectar à sala                       |  hi, meu nome eh <nome_do_usuario>  | OK |
 | Sair da sala                          |  bye                                | OK |
-| Exibir lista de usuários do chat      |  list                               |  |
+| Exibir lista de usuários do chat      |  list                               | OK |
 | Exibir lista de amigos                |  mylist                             | OK |
 | Adicionar usuário à lista de amigos   |  addtomylist <nome_do_usuario>      | OK |
 | Remover usuário da lista de amigos    |  rmvfrommylist <nome_do_usuario>    | OK |
@@ -15,9 +15,9 @@
 ## Outros
 
 1. OK - Formato da mensagem:
-   1. <IP>:<PORTA>/~<nome_usuario>: <mensagem> <hora-data>
+   1. OK <IP>:<PORTA>/~<nome_usuario>: <mensagem> <hora-data>
 2. OK - Mensagem de alerta quando um usuário se conecta
-   1. <nome_usuario> entrou na sala
+   1. OK <nome_usuario> entrou na sala
 3. Dois usuarios nao podem se conectar com o mesmo nome
 4. OK - Usuarios amigos ganham uma tag \[amigo\]
 5. Banir usuario:

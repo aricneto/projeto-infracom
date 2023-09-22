@@ -116,7 +116,7 @@ def send():
                 print (f"ban user {user}")
                 pass
             case s if s.startswith(Commands.SHOW_LIST_CMD):
-                print (f"show list")
+                sender.rdt_send(send_msg, server_address)
                 pass
             case s if s.startswith(Commands.SHOW_FRIEND_LIST_CMD):
                 if len(friends) > 0:
@@ -125,6 +125,7 @@ def send():
                     print ("você não tem amigos!")
                 pass
             case s if s.startswith(Commands.LOGOUT_CMD):
+                sender.rdt_send(send_msg, server_address)
                 print ("Deslogado! Feche o terminal para sair")
                 break
             case _:
