@@ -71,11 +71,13 @@ def receive():
             packet = receiver.wait_for_packet()
         else:
             msg = packet.decode()
-            sender_name, message = extract_msg(msg)
+            sender_address, sender_name, message = extract_msg(msg)
 
             if sender_name and message:
                 if sender_name in friends:
                     msg = msg.replace(sender_name, f"[amigo] {sender_name}")
+                print(msg)
+            else: 
                 print(msg)
             packet = None
 
@@ -117,7 +119,10 @@ def send():
                 print (f"show list")
                 pass
             case s if s.startswith(Commands.SHOW_FRIEND_LIST_CMD):
-                print (f"show friend list")
+                if len(friends) > 0:
+                    print (f"amigos: {', '.join(friends)}")
+                else:
+                    print ("você não tem amigos!")
                 pass
             case s if s.startswith(Commands.LOGOUT_CMD):
                 print ("Deslogado! Feche o terminal para sair")

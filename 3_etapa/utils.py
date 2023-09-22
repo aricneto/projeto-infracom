@@ -29,16 +29,17 @@ class bcolors(StrEnum):
     UNDERLINE = '\033[4m'
 
 def extract_msg(msg):
-    # regex para extrair nome e mensagem de uma mensagem
-    reg = r'~(.+): (.+) <\d+:\d+:\d+>'
+    # regex para extrair endereço, nome e mensagem de uma mensagem
+    reg = r'(\d+\.\d+\.\d+\.\d+:\d+)\/~(.+): (.+) <\d+:\d+:\d+>'
 
     match = re.search(reg, msg)
     
     if match:
         # extrair nome e mensagem
-        username = match.group(1)
-        message = match.group(2)
+        address = match.group(1)
+        username = match.group(2)
+        message = match.group(3)
         
-        return (username, message)
+        return (address, username, message)
     else:
-        return (None, None)
+        return (None, None, None)
