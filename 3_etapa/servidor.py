@@ -58,7 +58,11 @@ def receive():
         else:
             print(f"Novo pacote: {packet}")
             print(f"from: {g_address}")
-            sender.rdt_send(packet, g_address)
+
+            original_sender = g_address
+            for client in receiver.clients:
+                if client != original_sender:
+                    sender.rdt_send(packet, client)
 
             packet = None
 
