@@ -8,6 +8,8 @@ import time
 from common import Socket
 from utils import pretty_print, printc, bcolors
 
+DEBUG = True
+
 class Receiver:
     SEND_PROBABILITY = 1
 
@@ -27,7 +29,8 @@ class Receiver:
 
 
     def set_state(self, state: State):
-        # printc(f"> Receiver: Mudando de estado para {type(state).__name__}", bcolors.HEADER)
+        if DEBUG:
+            printc(f"> Receiver: Mudando de estado para {type(state).__name__}", bcolors.HEADER)
         self._state = state
         self._state.receiver = self
         self._state.entry_action()
@@ -144,7 +147,8 @@ class wait_for_below(State):
             acked = self.rdt_rcv()
 
             if (acked):
-                # printc(f"-> Receiver: Proximo seq para {self.receiver.rcv_address}: {self.receiver.next_seq(self.receiver.rcv_address)}", bcolors.HEADER)
+                if DEBUG:
+                    printc(f"-> Receiver: Proximo seq para {self.receiver.rcv_address}: {self.receiver.next_seq(self.receiver.rcv_address)}", bcolors.HEADER)
                 self.receiver.clients[self.receiver.rcv_address] = self.receiver.next_seq(self.receiver.rcv_address)
                 self.receiver.packet = self.data
                 toc = t()
@@ -159,7 +163,8 @@ class wait_for_below(State):
     
     def rdt_rcv(self) -> bool:
         # receber pacote
-        # print("\n-> Receiver: Esperando pacote")
+        if DEBUG:
+            print("\n-> Receiver: Esperando pacote")
         tic = t()
         while True:
             if self.receiver.incoming_pkt is not None:
@@ -177,7 +182,8 @@ class wait_for_below(State):
         
         tic = t()
         if header and address and self.receiver.sock.has_SEQ(header, self.receiver.seq(address)):
-            # print("-> Receiver: Envio de ACK")
+            if DEBUG:
+                print("-> Receiver: Envio de ACK")
             # extract data
             self.data = packet
             
@@ -185,14 +191,16 @@ class wait_for_below(State):
             self.receiver.sndpkt = sndpkt
             self.receiver.sock.udt_send(sndpkt, address, self.receiver.SEND_PROBABILITY)
             toc = t()
-            # print_elapsed(tic, toc, id="Receiver (envio de ACK)")
+            if DEBUG:
+                print_elapsed(tic, toc, id="Receiver (envio de ACK)")
             return True
         elif header and address and self.receiver.sock.has_SEQ(header, self.receiver.next_seq(address)):
             sndpkt = self.receiver.sock.make_ack(self.receiver.next_seq(address))
             self.receiver.sndpkt = sndpkt
             self.receiver.sock.udt_send(sndpkt, address, self.receiver.SEND_PROBABILITY)
             toc = t()
-            # print_elapsed(tic, toc, id="Receiver (envio de ACK fora de sequencia)")
+            if DEBUG:
+                print_elapsed(tic, toc, id="Receiver (envio de ACK fora de sequencia)")
             return False
         else:
             return False

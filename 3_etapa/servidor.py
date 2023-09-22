@@ -17,6 +17,8 @@ server = Socket(port=5000)
 receiver = Receiver(socket=server)
 sender = Sender(socket=server)
 
+g_address = None
+
 SERVER_DIR = "files_server"
 
 # inicializar pasta server
@@ -36,12 +38,15 @@ def main():
 def listen():
     while True:
         header, packet, address = server.rdt_rcv()
+        global g_address
+        g_address = address
         
         sender.incoming_pkt = (header, packet, address)
         receiver.incoming_pkt = (header, packet, address)
 
 def receive():
     print ("Iniciando receiver...")
+    global g_address
 
     packet, address = None, []
     isReceivingFile = False
@@ -52,26 +57,8 @@ def receive():
             packet = receiver.wait_for_packet()
         else:
             print(f"Novo pacote: {packet}")
-
-            if not isReceivingFile and packet[:len(Socket.HEADER_START)] == Socket.HEADER_START.encode():
-                header = packet.decode().split(",")
-                isReceivingFile = True
-                print(f"Header recebido: {header}")
-            if isReceivingFile:
-                filename = receiver.sock.receive_file(receiver=receiver, header=header, path=SERVER_DIR, append="s_")
-                isReceivingFile = False
-                sleep(1)
-                print ("Enviando de volta")
-                # Enviar de volta
-                with open(filename, "rb") as f:
-                        sender.sock.send_file(
-                            sender=sender,
-                            ip=receiver.rcv_address[0],
-                            port=receiver.rcv_address[1],
-                            msg=f.read(),
-                            filename=basename(filename)
-                        )
-                print ("Arquivo enviado de volta")
+            print(f"from: {g_address}")
+            sender.rdt_send(packet, g_address)
 
             packet = None
 

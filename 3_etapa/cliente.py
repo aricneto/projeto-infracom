@@ -4,13 +4,14 @@ from common import Socket
 from os.path import basename
 import os.path
 import threading
+import random
 
 """
 Cliente UDP
 
 """
 
-client = Socket(port=1337)
+client = Socket(port=random.randrange(3000, 8000))
 sender = Sender(socket=client)
 receiver = Receiver(socket=client)
 
@@ -18,7 +19,7 @@ receiver = Receiver(socket=client)
 CLIENT_DIR = "files_client"
 
 # definir servidor para onde vao ser enviados os arquivos
-server_ip = "localhost"
+server_ip = "127.0.0.1"
 server_port = 5000
 server_address = (server_ip, server_port)
 

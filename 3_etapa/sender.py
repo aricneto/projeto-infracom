@@ -8,6 +8,8 @@ from utils import print_elapsed, printc, bcolors
 from common import Socket
 from utils import pretty_print
 
+DEBUG = True
+
 class Sender:
     SEND_PROBABILITY = 1
 
@@ -16,6 +18,7 @@ class Sender:
             self.set_state(state)
         else:
             self.set_state(wait_for_call())
+        self._clients = {}
 
         if socket is None:
              self._sock = Socket(port=5000)
@@ -23,23 +26,36 @@ class Sender:
              self._sock = socket
 
         self._incoming_pkt = None
+        self._address = None
 
     def set_state(self, state: State):
-        # printc(f"> Sender: Mudando de estado para {type(state).__name__} seq={state.seq}", bcolors.HEADER)
+        # if DEBUG:
+        #     printc(f"> Sender: Mudando de estado para {type(state).__name__} seq={self.seq(self.address)}", bcolors.HEADER)
         self._state = state
         self._state.sender = self
 
     def print_state(self):
-        pretty_print(f"Sender esta em: {type(self._state).__name__} seq={self._state.seq}")
+        # pretty_print(f"Sender esta em: {type(self._state).__name__} seq={self._state.seq}")
+        pass
     
     def start_timer(self, duration=2):
-        # pretty_print("Iniciando temporizador", "*", "", "*")
+        if DEBUG:
+            pretty_print("Iniciando temporizador", "*", "", "*")
         self._timer = threading.Timer(duration, self.timeout)
         self._timer.start()
 
     def stop_timer(self):
-        # pretty_print("Parando temporizador", "*", "", "*")
+        if DEBUG:
+            pretty_print("Parando temporizador", "*", "", "*")
         self._timer.cancel()
+
+    @property
+    def clients(self):
+        return self._clients
+    
+    @clients.setter
+    def clients(self, clients):
+        self._clients = clients
 
     @property
     def sock(self):
@@ -81,23 +97,27 @@ class Sender:
         self._state.entry_action()
 
     def timeout(self) -> None:
-        # printc("===> Timeout, retransmitindo <===", bcolors.WARNING)
+        if DEBUG:
+            printc("===> Timeout, retransmitindo <===", bcolors.WARNING)
         self._sock.udt_send(self._sndpkt, self._address, self.SEND_PROBABILITY)
         self.start_timer()
 
+    # Retorna o numero de sequencia para um determinado cliente
+    def seq(self, client) -> int:
+        if (client in self.clients):
+            return self.clients[client]
+        else:
+            self.clients[client] = 0
+            return 0
+        
+    # Retorna o próximo numero de sequencia para um determinado cliente
+    def next_seq(self, client) -> int:
+        return (self.seq(client) + 1) % 2
 
 class State(ABC):
 
     def __init__(self, seq=0) -> None:
         self._seq = seq
-
-    @property
-    def seq(self):
-        return self._seq
-
-    @property
-    def next_seq(self):
-        return (self._seq + 1) % 2
 
     @property
     def sender(self) -> Sender:
@@ -134,8 +154,10 @@ class wait_for_call(State):
     
     def rdt_send(self, data, address) -> int:
         tic = t()
-        # print (f"-> Sender: enviando {data[:12]}...")
-        sndpkt = self.sender.sock.make_pkt(self.seq, data)
+        if DEBUG:
+            print (f"-> Sender: enviando {data[:12]}... para: {address}, seq={self.sender.seq(address)}")
+            print (self.sender.clients)
+        sndpkt = self.sender.sock.make_pkt(self.sender.seq(address), data)
 
         # salvar pacote para retransmissao
         self.sender.sndpkt = sndpkt
@@ -149,7 +171,7 @@ class wait_for_call(State):
         self.sender.start_timer()
 
         # mudar estado
-        self.sender.change_state(wait_for_ack(self.seq))
+        self.sender.change_state(wait_for_ack(self.sender.seq(address)))
 
         toc = t()
         # print_elapsed(tic, toc, id="Sender (envio de pacote)")
@@ -173,7 +195,9 @@ class wait_for_ack(State):
             acked = self.rdt_rcv()
 
             if (acked):
-                self.sender.change_state(wait_for_call(self.next_seq))
+                printc(f"> Sender: Mudando de estado para wait for call seq={self.sender.next_seq(self.sender.address)}", bcolors.HEADER)
+                self.sender.clients[self.sender.address] = self.sender.next_seq(self.sender.address)
+                self.sender.change_state(wait_for_call(self.sender.seq(self.sender.address)))
                 toc = t()
                 # print_elapsed(tic, toc, id="Sender (espera de ACK)")
                 break
@@ -193,15 +217,18 @@ class wait_for_ack(State):
         if header and not self.sender.sock.has_ACK(header):
             return False
 
-        # print (f"-> Sender: Header recebido: {header}")
+        if DEBUG:
+            print (f"-> Sender: Header recebido: {header}")
 
-        if header and self.sender.sock.is_ACK(header, self.seq):
-            # print ("-> Sender: ACK correto recebido")
+        if header and self.sender.sock.is_ACK(header, self.sender.seq(self.sender.address)):
+            if DEBUG:
+                print ("-> Sender: ACK correto recebido")
             # pausar temporizador
             self.sender.stop_timer()
             return True 
-        elif header and self.sender.sock.is_ACK(header, self.next_seq):
-            # print ("-> Sender: ACK errado recebido")
+        elif header and self.sender.sock.is_ACK(header, self.sender.next_seq(self.sender.address)):
+            if DEBUG:
+                print ("-> Sender: ACK errado recebido")
             return False
         else: # simular perda
             return False
