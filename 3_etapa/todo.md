@@ -18,7 +18,7 @@
    1. OK <IP>:<PORTA>/~<nome_usuario>: <mensagem> <hora-data>
 2. OK - Mensagem de alerta quando um usuário se conecta
    1. OK <nome_usuario> entrou na sala
-3. Dois usuarios nao podem se conectar com o mesmo nome
+3. OK - Dois usuarios nao podem se conectar com o mesmo nome
 4. OK - Usuarios amigos ganham uma tag \[amigo\]
 5. Banir usuario:
    1. Servidor abre uma contagem

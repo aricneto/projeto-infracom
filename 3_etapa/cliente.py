@@ -13,7 +13,7 @@ Cliente UDP
 
 """
 
-client = Socket(port=random.randrange(3000, 8000))
+client = Socket(port=random.randrange(10000, 40000))
 sender = Sender(socket=client)
 receiver = Receiver(socket=client)
 
@@ -71,6 +71,15 @@ def receive():
             packet = receiver.wait_for_packet()
         else:
             msg = packet.decode()
+
+            if msg == Commands.USER_ALREADY_EXISTS:
+                print("ja existe um usuario com este nome, tente novamente")
+                os._exit(1)
+            
+            if msg == Commands.USER_BANNED:
+                print("você foi banido!")
+                os._exit(1)
+            
             sender_address, sender_name, message = extract_msg(msg)
 
             if sender_name and message:
@@ -126,8 +135,8 @@ def send():
                 pass
             case s if s.startswith(Commands.LOGOUT_CMD):
                 sender.rdt_send(send_msg, server_address)
-                print ("Deslogado! Feche o terminal para sair")
-                break
+                print ("Deslogado!")
+                os._exit(1)
             case _:
                 sender.rdt_send(send_msg, server_address)
 

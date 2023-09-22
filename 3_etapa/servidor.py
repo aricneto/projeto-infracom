@@ -83,25 +83,27 @@ def receive():
 
                 # anunciar usuario
                 if msg.endswith(Commands.USER_ENTERED):
+                    sender_name = msg[:-len(Commands.USER_ENTERED)]
                     formatted_msg = f"servidor: {msg}"
                     # adicionar usuario conectado
-                    if sender_address not in connected_users:
-                        sender_name = msg[:-len(Commands.USER_ENTERED)]
-                        connected_users[sender_address] = sender_name
+                    if sender_name not in connected_users:
+                        connected_users[sender_name] = sender_address
+                    else: # ja existe usuario com este nome
+                        sender.rdt_send(Commands.USER_ALREADY_EXISTS.encode(), sender_address)
+                        packet = None
+                        continue              
+
+                formatted_msg = f"{sender_address[0]}:{sender_address[1]}/~{msg} <{receive_time}>"
 
                 # deslogar usuario
-                elif sender_msg == Commands.LOGOUT_CMD:
-                    if sender_address in connected_users:
-                        del connected_users[sender_address]
-                        formatted_msg = f"Usuario desconectado: {sender_name}"                
+                if sender_msg == Commands.LOGOUT_CMD:
+                    if sender_name in connected_users:
+                        del connected_users[sender_name]
+                        formatted_msg = f"Usuario desconectado: {sender_name}"  
 
-                # mensagem normal
-                else:
-                    formatted_msg = f"{sender_address[0]}:{sender_address[1]}/~{msg} <{receive_time}>"
-
-                for client in receiver.clients:
-                    if client != sender_address:
-                        sender.rdt_send(formatted_msg.encode(), client)
+                for client in connected_users:
+                    if connected_users[client] != sender_address:
+                        sender.rdt_send(formatted_msg.encode(), connected_users[client])
 
             packet = None
 

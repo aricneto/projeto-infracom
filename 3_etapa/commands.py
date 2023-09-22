@@ -7,4 +7,6 @@ class Commands:
     REMOVE_FRIEND_CMD = "rmvfrommylist "
     BAN_CMD = "ban "
     USER_ENTERED = " entrou na sala!"
+    USER_ALREADY_EXISTS = "ja existe um usuario com este nome"
+    USER_BANNED = "você foi banido!"
 
