@@ -66,7 +66,7 @@ def receive():
             print(f"Novo pacote: {packet}")
             print(f"from: {g_address}")
 
-            receive_time = datetime.now().strftime('%H:%M:%S')
+            receive_time = datetime.now().strftime('%H:%M:%S, %m/%d/%Y')
 
             # so enviar se souber de onde veio
             if g_address:
@@ -88,7 +88,7 @@ def receive():
                     banned_user = sender_msg[len(Commands.BAN_CMD):]
                     if banned_user not in connected_users:
                         sender.rdt_send(f"este usuario nao existe, ou nao está mais conectado".encode(), sender_address)
-                    if banned_user not in ongoing_bans:
+                    elif banned_user not in ongoing_bans:
                         votes_needed = (len(connected_users) // 2) + 1
                         ban = Ban(
                             banned_user=banned_user, 

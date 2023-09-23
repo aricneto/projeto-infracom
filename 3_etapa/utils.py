@@ -30,7 +30,7 @@ class bcolors(StrEnum):
 
 def extract_msg(msg):
     # regex para extrair endereço, nome e mensagem de uma mensagem
-    reg = r'(\d+\.\d+\.\d+\.\d+:\d+)\/~(.+): (.+) <\d+:\d+:\d+>'
+    reg = r'(\d+\.\d+\.\d+\.\d+:\d+)\/~(.+): (.+) <\d+:\d+:\d+, \d+/\d+/\d+>'
 
     match = re.search(reg, msg)
     

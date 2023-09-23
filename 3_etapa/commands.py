@@ -1,5 +1,5 @@
 class Commands:
-    LOGIN_CMD = "h "# "hi, meu nome eh "
+    LOGIN_CMD = "hi, meu nome eh "
     LOGOUT_CMD = "/bye"
     SHOW_LIST_CMD = "/list"
     SHOW_FRIEND_LIST_CMD = "/mylist"

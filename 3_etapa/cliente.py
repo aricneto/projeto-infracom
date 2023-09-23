@@ -35,7 +35,7 @@ username = None
 def main():
     global username
     # login
-    print(f"Bem vindo à sala de chat. Digite '{Commands.LOGIN_CMD}' para se conectar")
+    print(f"Bem vindo à sala de chat. Digite '{Commands.LOGIN_CMD}<nome>' para se conectar")
     
     while True: 
         msg = input()
