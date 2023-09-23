@@ -56,3 +56,8 @@ def extract_msg_server(msg):
         return (username, message)
     else:
         return (None, None)
+    
+def broadcast_msg(connected_users, sender, sender_address, msg, include_sender=False):
+    for client in connected_users:
+        if include_sender or connected_users[client] != sender_address:
+            sender.rdt_send(msg.encode(), connected_users[client])
