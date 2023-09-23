@@ -10,7 +10,7 @@
 | Exibir lista de amigos                |  mylist                             | OK |
 | Adicionar usuário à lista de amigos   |  addtomylist <nome_do_usuario>      | OK |
 | Remover usuário da lista de amigos    |  rmvfrommylist <nome_do_usuario>    | OK |
-| Banir usuário da sala                 |  ban <nome_do_usuario>              |  |
+| Banir usuário da sala                 |  ban <nome_do_usuario>              | OK |
 
 ## Outros
 

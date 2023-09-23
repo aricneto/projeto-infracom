@@ -136,6 +136,8 @@ def send():
                 sender.rdt_send(send_msg, server_address)
                 print ("Deslogado!")
                 os._exit(1)
+            case "/help":
+                print (f"comandos disponiveis: {Commands.ALL_CMDS}")
             case _:
                 sender.rdt_send(send_msg, server_address)
 
