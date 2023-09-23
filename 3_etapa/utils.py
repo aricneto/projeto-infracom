@@ -1,4 +1,3 @@
-from enum import StrEnum
 import re
 
 
@@ -17,7 +16,7 @@ def printc(msg, color=None):
     else:
         print(msg)
 
-class bcolors(StrEnum):
+class bcolors:
     HEADER = '\033[95m',
     OKBLUE = '\033[94m',
     OKCYAN = '\033[96m',

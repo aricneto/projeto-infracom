@@ -1,6 +1,5 @@
 import random
 import socket
-from enum import IntEnum
 from os.path import join as pathjoin
 from os.path import basename
 from time import process_time as t
@@ -18,13 +17,13 @@ class Socket:
     PACKET_START = "HELLOPKT"
 
     # define as posições de cada um dos elementos do header de uma transferência
-    class Header(IntEnum):
+    class Header:
         START = 0
         FILENAME = 1
         DATA_LENGTH = 2
         EXTRA = 3
 
-    class PacketHeader(IntEnum):
+    class PacketHeader:
         START = 0
         ACK = 1
         SEQ = 2
