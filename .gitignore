@@ -4,3 +4,4 @@ __pycache__
 __notepad.py
 ./*/output/
 **/files_*/
+*.mp4

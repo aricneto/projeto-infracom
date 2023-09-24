@@ -10,6 +10,33 @@ Em outra janela, inicialize o servidor
 
     python ./servidor.py
 
+## Comandos
+
+| Funcionalidade                        |  Comando                             |
+|---------------------------------------|--------------------------------------|
+| Conectar à sala                       |  hi, meu nome eh <nome_do_usuario>   |
+| Sair da sala                          |  /bye                                |
+| Exibir lista de usuários do chat      |  /list                               |
+| Exibir lista de amigos                |  /mylist                             |
+| Adicionar usuário à lista de amigos   |  /addtomylist <nome_do_usuario>      |
+| Remover usuário da lista de amigos    |  /rmvfrommylist <nome_do_usuario>    |
+| Banir usuário da sala                 |  /ban <nome_do_usuario>              |
+
+## Outros
+
+1. Formato da mensagem:
+   1. \<IP\>:\<PORTA\>/~\<nome_usuario\>: \<mensagem\> \<hora-data\>
+2. Mensagem de alerta quando um usuário se conecta
+   1. <nome_usuario> entrou na sala
+3. Dois usuarios nao podem se conectar com o mesmo nome
+4. Usuarios amigos ganham uma tag \[amigo\]
+5. Banir usuario:
+   1. Servidor abre uma contagem
+   2. Caso atinga mais da metade de usuarios conectados, usuario e banido
+   3. Todos recebem uma mensagem: <nome_usuario> ban x/y
+      1. x é o numero de votos
+      2. y é o numero de votos necessarios (metade + 1)
+
 ## Simulando perda de pacotes
 
 Perdas de pacotes podem ser simuladas alterando a variável `SEND_PROBABILITY` em `sender.py` e `receiver.py`, de acordo com qual lado se deseja simular a perda. Esta variável define a probabilidade que um pacote seja enviado com sucesso por uma máquina.
@@ -46,34 +73,6 @@ O cliente possui uma interface de comandos para facilitar a interação
 ### Detalhes sobre pacotes
 
 Todo pacote enviado tanto pelo cliente quanto pelo servidor terá adicionado um header, indicando uma sequencia de caracteres que identifique o pacote `"HELLOPKT"`, os numeros `seq` e `ack`, e o conteudo do pacote
-
-### Envio de strings
-
-Apenas digite qualquer coisa na linha de comando do cliente para enviar uma string para o servidor
-
-### Envio de arquivos
-
-1. Digite `arquivo` ou `arq` para enviar um arquivo ao servidor
-2. Insira o caminho do arquivo relativo à pasta em que foi executado o comando de compilar o cliente
-   1. Por exemplo, para enviar um dos arquivos de teste, digite `../test_files/cheems.png`
-   2. Ou, para enviar o próprio código do cliente, `./cliente.py`
-3. O arquivo será enviado ao servidor junto com um *header* que irá conter as seguintes informações
-   1. Uma mensagem especificando o inicio do header
-   2. O nome do arquivo e sua extensão
-   3. O tamanho, em *bytes* do arquivo
-   4. *(opcional)* Uma mensagem extra, se for necessário debugar algo
-4. O arquivo será enviado em pacotes de tamanho `buffer_size`, definido em `common.py` como `1024 bytes`
-5. O servidor irá receber, primeiramente, o *header*, que lhe informará a quantidade de bytes que ele estará esperando receber
-6. A medida que o servidor recebe pacotes do cliente, ele irá os salvando em um arquivo com a mesma extensão
-7. Quando a transferência é completada, o arquivo é enviado de volta ao cliente, repetindo as etapas a partir do passo 3
-8. Os arquivos do recebidos no cliente e servidor podem ser encontrados em `files_client/` e `files_server/` (ou nos caminhos especificados em `CLIENT_DIR` e `SERVER_DIR`)
-
-### Nome dos arquivos
-
-Para explicitar o funcionamento do código, o arquivo, quando recebido pelo servidor, terá o codigo `s_` adicionado ao inicio do nome descrito no header.
-
-   1. Quando este é recebido pelo cliente, ele terá o código `c_` adicionado ao inicio do nome descrito no header.
-   2. Desta forma, sendo o arquivo original `nome.txt`, o servidor irá o salvar (e enviar ao cliente) como `s_nome.txt`, e o cliente irá o salvar como `c_s_nome.txt`
 
 ### Timeout
 
